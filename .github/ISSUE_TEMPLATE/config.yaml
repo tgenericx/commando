@@ -6,3 +6,6 @@ contact_links:
   - name: 🐛 Bug Report
     url: https://github.com/tgenericx/commando/issues/new?template=bug.yaml
     about: Report a bug or unexpected behavior
+  - name: 🚀 Feature Request
+    url: https://github.com/tgenericx/commando/issues/new?template=feature_request.yaml
+    about: Suggest a new feature or enhancement

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🧠 Pre-implementation Discussion
+    url: https://github.com/tgenericx/commando/issues/new?template=engineering-task.yaml
+    about: Technical design and analysis (Think first, code second)
+  - name: 🐛 Bug Report
+    url: https://github.com/tgenericx/commando/issues/new?template=bug.yaml
+    about: Report a bug or unexpected behavior

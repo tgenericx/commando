@@ -1,0 +1,88 @@
+name: ✨ Feature Request
+description: Propose a new capability or behavior for the system.
+title: "[FEATURE] <short capability name>"
+labels: ["✨ feature", "🚦 status: design"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This project follows **ground-up, domain-first development**.
+        Features are accepted only when their domain impact is clearly understood.
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this feature needed? What problem does it solve?
+      placeholder: |
+        Example:
+        Allow CLI tools to authenticate without embedding browser flows.
+    validations:
+      required: true
+
+  - type: textarea
+    id: capability
+    attributes:
+      label: Capability Description
+      description: Describe the new behavior in domain terms (not UI or implementation).
+      placeholder: |
+        Example:
+        The system shall support OAuth 2.0 Device Authorization Grant.
+    validations:
+      required: true
+
+  - type: textarea
+    id: domain-impact
+    attributes:
+      label: Domain Impact
+      description: Which domain concepts are affected or introduced?
+      placeholder: |
+        - Client
+        - DeviceAuthorization
+        - Token
+    validations:
+      required: true
+
+  - type: textarea
+    id: invariants
+    attributes:
+      label: New or Affected Invariants
+      description: What rules must always hold after this feature is added?
+      placeholder: |
+        - Device codes must expire
+        - A device authorization can only be approved once
+    validations:
+      required: true
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Explicitly Out of Scope
+      description: What this feature will NOT handle (to prevent scope creep).
+      placeholder: |
+        - No multi-user support
+        - No UI customization
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Other ways to solve the same problem and why they were rejected.
+      placeholder: |
+        - Reusing authorization code flow in CLI (poor UX)
+        - Hardcoding tokens (security risk)
+    validations:
+      required: false
+
+  - type: textarea
+    id: success
+    attributes:
+      label: Acceptance Criteria
+      description: How will we know this feature is correctly implemented?
+      placeholder: |
+        - CLI can obtain tokens without browser
+        - Tests cover failure cases
+    validations:
+      required: true

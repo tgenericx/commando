@@ -1,9 +1,10 @@
 mod cli;
 mod staging_checker;
 use cli::CliController;
+use std::process::ExitCode;
 
-fn main() {
+fn main() -> ExitCode {
     let controller = CliController::new();
 
-    controller.run();
+    controller.run()
 }

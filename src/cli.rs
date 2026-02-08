@@ -1,3 +1,6 @@
+use std::process::ExitCode;
+
+#[derive(Default)]
 pub struct CliController;
 
 impl CliController {
@@ -5,16 +8,10 @@ impl CliController {
         Self
     }
 
-    pub fn run(&self) -> i32 {
+    pub fn run(&self) -> ExitCode {
         println!("CLI controller initialized");
         println!("Staging check: not implemented");
-        0
-    }
-}
-
-impl Default for CliController {
-    fn default() -> Self {
-        Self::new()
+        ExitCode::SUCCESS
     }
 }
 
@@ -32,6 +29,6 @@ mod tests {
         let controller = CliController::new();
         let exit_code = controller.run();
 
-        assert_eq!(exit_code, 0);
+        assert_eq!(exit_code, ExitCode::SUCCESS);
     }
 }

@@ -1,0 +1,131 @@
+#!/bin/bash
+
+# Test script for staging state check
+# This script tests different scenarios for the staging checker CLI
+
+set -e
+
+echo "================================"
+echo "Staging Checker Test Suite"
+echo "================================"
+echo ""
+
+# Save original directory (project root)
+PROJECT_ROOT="$(pwd)"
+BIN="$PROJECT_ROOT/target/debug/commando"
+
+# Ensure binary exists
+if [ ! -f "$BIN" ]; then
+  echo "Binary not found. Building project..."
+  cargo build
+fi
+
+# Create temp directory for tests
+TEST_DIR="$(mktemp -d)"
+echo "Test directory: $TEST_DIR"
+echo ""
+
+cleanup() {
+  cd "$PROJECT_ROOT"
+  rm -rf "$TEST_DIR"
+}
+trap cleanup EXIT
+
+# -----------------------------
+# Test 1: Not a Git repository
+# -----------------------------
+echo "Test 1: Not in a Git repository"
+echo "--------------------------------"
+cd "$TEST_DIR"
+mkdir no-git
+cd no-git
+
+if "$BIN" 2>&1 | grep -q "Not inside a git repository"; then
+  echo "✓ PASS: Correctly detected non-git repository"
+else
+  echo "✗ FAIL: Should detect non-git repository"
+fi
+echo ""
+
+# -----------------------------------
+# Test 2: Git repo with no staged changes
+# -----------------------------------
+echo "Test 2: Git repo with no staged changes"
+echo "----------------------------------------"
+cd "$TEST_DIR"
+mkdir no-staged
+cd no-staged
+git init -q
+echo "test" >file.txt
+
+if "$BIN" 2>&1 | grep -q "No staged changes found"; then
+  echo "✓ PASS: Correctly detected no staged changes"
+else
+  echo "✗ FAIL: Should detect no staged changes"
+fi
+echo ""
+
+# --------------------------------
+# Test 3: Git repo with staged changes
+# --------------------------------
+echo "Test 3: Git repo with staged changes"
+echo "-------------------------------------"
+cd "$TEST_DIR"
+mkdir with-staged
+cd with-staged
+git init -q
+echo "test" >file.txt
+git add file.txt
+
+if "$BIN" 2>&1 | grep -q "Staged changes detected"; then
+  echo "✓ PASS: Correctly detected staged changes"
+else
+  echo "✗ FAIL: Should detect staged changes"
+fi
+echo ""
+
+# ---------------------------------------
+# Test 4: Git repo with multiple staged files
+# ---------------------------------------
+echo "Test 4: Git repo with multiple staged files"
+echo "--------------------------------------------"
+cd "$TEST_DIR"
+mkdir multi-staged
+cd multi-staged
+git init -q
+echo "file1" >file1.txt
+echo "file2" >file2.txt
+echo "file3" >file3.txt
+git add .
+
+if "$BIN" 2>&1 | grep -q "Staged changes detected"; then
+  echo "✓ PASS: Correctly detected multiple staged files"
+else
+  echo "✗ FAIL: Should detect multiple staged files"
+fi
+echo ""
+
+# ------------------------------------------
+# Test 5: Git repo with unstaged changes only
+# ------------------------------------------
+echo "Test 5: Git repo with unstaged changes only"
+echo "--------------------------------------------"
+cd "$TEST_DIR"
+mkdir unstaged-only
+cd unstaged-only
+git init -q
+echo "test" >file.txt
+git add file.txt
+git commit -q -m "Initial commit"
+echo "modified" >file.txt
+
+if "$BIN" 2>&1 | grep -q "No staged changes found"; then
+  echo "✓ PASS: Correctly ignored unstaged changes"
+else
+  echo "✗ FAIL: Should ignore unstaged changes"
+fi
+echo ""
+
+echo "================================"
+echo "Test Suite Complete"
+echo "================================"

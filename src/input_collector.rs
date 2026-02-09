@@ -8,6 +8,27 @@ use std::io::{self, Write};
 #[derive(Default, Debug)]
 pub struct InputCollector;
 
+#[derive(Debug, Clone)]
+pub struct CommitData {
+    pub commit_type: CommitType,
+    pub scope: Option<String>,
+    pub description: String,
+    pub body: Option<String>,
+    pub breaking_change: Option<String>,
+}
+
+impl CommitData {
+    pub fn to_commit_message(&self) -> Result<CommitMessage, ValidationError> {
+        CommitMessage::new(
+            self.commit_type,
+            self.scope.clone(),
+            self.description.clone(),
+            self.body.clone(),
+            self.breaking_change.clone(),
+        )
+    }
+}
+
 impl InputCollector {
     pub fn new() -> Self {
         Self
@@ -37,6 +58,44 @@ impl InputCollector {
         // Create commit message (should always succeed since we validated each field)
         CommitMessage::new(commit_type, scope, description, body, breaking_change)
             .map_err(|e| format!("Unexpected validation error: {}", e))
+    }
+
+    /// Re-collect a specific field for editing
+    ///
+    /// Returns updated CommitData with the new field value
+    pub fn edit_field(&self, data: &CommitData, field: &str) -> Result<CommitData, String> {
+        let mut new_data = data.clone();
+
+        match field {
+            "type" | "1" => {
+                println!("\nEditing commit type...\n");
+                new_data.commit_type = self.collect_type()?;
+            }
+            "scope" | "2" => {
+                println!("\nEditing scope...\n");
+                new_data.scope = self.collect_scope()?;
+            }
+            "description" | "desc" | "3" => {
+                println!("\nEditing description...\n");
+                new_data.description = self.collect_description()?;
+            }
+            "body" | "4" => {
+                println!("\nEditing body...\n");
+                new_data.body = self.collect_body()?;
+            }
+            "breaking" | "5" => {
+                println!("\nEditing breaking change...\n");
+                new_data.breaking_change = self.collect_breaking_change()?;
+            }
+            _ => {
+                return Err(format!(
+                    "Unknown field: '{}'. Valid fields: type, scope, description, body, breaking",
+                    field
+                ));
+            }
+        }
+
+        Ok(new_data)
     }
 
     fn collect_type(&self) -> Result<CommitType, String> {

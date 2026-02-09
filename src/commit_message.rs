@@ -230,6 +230,27 @@ impl CommitMessage {
 
         result
     }
+
+    // Getters - These are marked as pub so they can be used externally
+    pub fn commit_type(&self) -> CommitType {
+        self.commit_type
+    }
+
+    pub fn scope(&self) -> Option<&str> {
+        self.scope.as_deref()
+    }
+
+    pub fn description(&self) -> &str {
+        &self.description
+    }
+
+    pub fn body(&self) -> Option<&str> {
+        self.body.as_deref()
+    }
+
+    pub fn breaking_change(&self) -> Option<&str> {
+        self.breaking_change.as_deref()
+    }
 }
 
 #[cfg(test)]

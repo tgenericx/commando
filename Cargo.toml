@@ -4,7 +4,14 @@ version = "0.3.0"
 edition = "2024"
 authors = ["Hammed Anuoluwapo Pelumi <stationphast@gmail.com>"]
 description = "An interactive CLI tool to help you write conventional commit messages with ease."
-keywords = ["cli", "conventional commits", "interactive"]
 license = "MIT"
+
+repository = "https://github.com/tgenericx/commando"
+homepage = "https://github.com/tgenericx/commando"
+documentation = "https://github.com/tgenericx/commando#readme"
+
+readme = "README.md"
+keywords = ["git", "commit", "cli", "conventional-commits"]
+categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]

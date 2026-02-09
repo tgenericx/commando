@@ -177,7 +177,7 @@ impl CommitMessage {
         Ok(())
     }
 
-    fn validate_scope(scope: &str) -> Result<(), ValidationError> {
+    pub fn validate_scope(scope: &str) -> Result<(), ValidationError> {
         let trimmed = scope.trim();
 
         if trimmed.is_empty() {

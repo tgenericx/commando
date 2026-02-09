@@ -5,6 +5,7 @@ use std::io::{self, Write};
 ///
 /// Guides users through creating a valid commit message step-by-step.
 /// Validates each field individually and provides clear feedback.
+#[derive(Default, Debug)]
 pub struct InputCollector;
 
 impl InputCollector {
@@ -73,8 +74,6 @@ impl InputCollector {
                         "Error: '{}' is not a valid type. Please choose from the list above.",
                         input
                     );
-                    print!("Your choice: ");
-                    io::stdout().flush().map_err(|e| e.to_string())?;
                 }
                 Err(e) => return Err(e.to_string()),
             }
@@ -103,10 +102,7 @@ impl InputCollector {
             }
 
             // Validate scope
-            if input
-                .chars()
-                .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
-            {
+            if CommitMessage::validate_scope(input).is_ok() {
                 println!();
                 return Ok(Some(input.to_string()));
             } else {
@@ -229,12 +225,6 @@ impl InputCollector {
             println!();
             return Ok(Some(input));
         }
-    }
-}
-
-impl Default for InputCollector {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

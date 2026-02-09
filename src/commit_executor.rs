@@ -92,22 +92,22 @@ impl CommitExecutor {
         // [main (root-commit) 1234abc] commit message
 
         for line in output.lines() {
-            if let Some(bracket_start) = line.find('[') {
-                if let Some(bracket_end) = line.find(']') {
-                    let inside_brackets = &line[bracket_start + 1..bracket_end];
+            if let Some(bracket_start) = line.find('[')
+                && let Some(bracket_end) = line.find(']')
+            {
+                let inside_brackets = &line[bracket_start + 1..bracket_end];
 
-                    // Extract the SHA (usually after the branch name)
-                    let parts: Vec<&str> = inside_brackets.split_whitespace().collect();
+                // Extract the SHA (usually after the branch name)
+                let parts: Vec<&str> = inside_brackets.split_whitespace().collect();
 
-                    // SHA is typically the last part, or second-to-last if root-commit
-                    for part in parts.iter().rev() {
-                        // SHA is alphanumeric and typically 7-40 chars
-                        if part.len() >= 7
-                            && part.chars().all(|c| c.is_ascii_alphanumeric())
-                            && *part != "root"
-                        {
-                            return Ok(part.to_string());
-                        }
+                // SHA is typically the last part, or second-to-last if root-commit
+                for part in parts.iter().rev() {
+                    // SHA is alphanumeric and typically 7-40 chars
+                    if part.len() >= 7
+                        && part.chars().all(|c| c.is_ascii_alphanumeric())
+                        && *part != "root"
+                    {
+                        return Ok(part.to_string());
                     }
                 }
             }

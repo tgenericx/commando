@@ -1,5 +1,6 @@
 mod cli;
 mod commit_message;
+mod input_collector;
 mod staging_checker;
 use cli::CliController;
 use std::process::ExitCode;

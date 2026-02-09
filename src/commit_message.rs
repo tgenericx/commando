@@ -62,23 +62,6 @@ impl CommitType {
             _ => Err(ValidationError::InvalidCommitType(s.to_string())),
         }
     }
-
-    /// Returns all valid commit types
-    pub fn all() -> &'static [CommitType] {
-        &[
-            CommitType::Feat,
-            CommitType::Fix,
-            CommitType::Docs,
-            CommitType::Style,
-            CommitType::Refactor,
-            CommitType::Perf,
-            CommitType::Test,
-            CommitType::Build,
-            CommitType::Ci,
-            CommitType::Chore,
-            CommitType::Revert,
-        ]
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -95,16 +78,28 @@ impl std::fmt::Display for ValidationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ValidationError::InvalidCommitType(t) => {
-                write!(f, "Invalid commit type: '{}'. Must be one of: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert", t)
+                write!(
+                    f,
+                    "Invalid commit type: '{}'. Must be one of: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert",
+                    t
+                )
             }
             ValidationError::EmptyDescription => {
                 write!(f, "Description cannot be empty")
             }
             ValidationError::DescriptionTooLong(len) => {
-                write!(f, "Description is too long ({} characters). Maximum is 72 characters", len)
+                write!(
+                    f,
+                    "Description is too long ({} characters). Maximum is 72 characters",
+                    len
+                )
             }
             ValidationError::InvalidScope(s) => {
-                write!(f, "Invalid scope: '{}'. Scope must be alphanumeric with hyphens/underscores", s)
+                write!(
+                    f,
+                    "Invalid scope: '{}'. Scope must be alphanumeric with hyphens/underscores",
+                    s
+                )
             }
             ValidationError::EmptyBreakingChange => {
                 write!(f, "Breaking change description cannot be empty")
@@ -145,18 +140,18 @@ impl CommitMessage {
             Self::validate_scope(s)?;
         }
 
-        // Validate body if provided
-        if let Some(ref b) = body {
-            if b.trim().is_empty() {
-                return Err(ValidationError::EmptyBody);
-            }
+        // Validate body if provided - FIXED: collapsed if statement
+        if let Some(ref b) = body
+            && b.trim().is_empty()
+        {
+            return Err(ValidationError::EmptyBody);
         }
 
-        // Validate breaking change if provided
-        if let Some(ref bc) = breaking_change {
-            if bc.trim().is_empty() {
-                return Err(ValidationError::EmptyBreakingChange);
-            }
+        // Validate breaking change if provided - FIXED: collapsed if statement
+        if let Some(ref bc) = breaking_change
+            && bc.trim().is_empty()
+        {
+            return Err(ValidationError::EmptyBreakingChange);
         }
 
         Ok(CommitMessage {
@@ -170,7 +165,7 @@ impl CommitMessage {
 
     fn validate_description(description: &str) -> Result<(), ValidationError> {
         let trimmed = description.trim();
-        
+
         if trimmed.is_empty() {
             return Err(ValidationError::EmptyDescription);
         }
@@ -184,13 +179,16 @@ impl CommitMessage {
 
     fn validate_scope(scope: &str) -> Result<(), ValidationError> {
         let trimmed = scope.trim();
-        
+
         if trimmed.is_empty() {
             return Err(ValidationError::InvalidScope(scope.to_string()));
         }
 
         // Scope should be alphanumeric with hyphens and underscores
-        if !trimmed.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
+        if !trimmed
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
+        {
             return Err(ValidationError::InvalidScope(scope.to_string()));
         }
 
@@ -231,31 +229,6 @@ impl CommitMessage {
         }
 
         result
-    }
-
-    // Getters
-    pub fn commit_type(&self) -> CommitType {
-        self.commit_type
-    }
-
-    pub fn scope(&self) -> Option<&str> {
-        self.scope.as_deref()
-    }
-
-    pub fn description(&self) -> &str {
-        &self.description
-    }
-
-    pub fn body(&self) -> Option<&str> {
-        self.body.as_deref()
-    }
-
-    pub fn breaking_change(&self) -> Option<&str> {
-        self.breaking_change.as_deref()
-    }
-
-    pub fn has_breaking_change(&self) -> bool {
-        self.breaking_change.is_some()
     }
 }
 
@@ -313,27 +286,18 @@ mod tests {
 
     #[test]
     fn empty_description_fails() {
-        let commit = CommitMessage::new(
-            CommitType::Feat,
-            None,
-            "".to_string(),
-            None,
-            None,
-        );
+        let commit = CommitMessage::new(CommitType::Feat, None, "".to_string(), None, None);
         assert!(matches!(commit, Err(ValidationError::EmptyDescription)));
     }
 
     #[test]
     fn description_too_long_fails() {
         let long_desc = "a".repeat(73);
-        let commit = CommitMessage::new(
-            CommitType::Feat,
-            None,
-            long_desc,
-            None,
-            None,
-        );
-        assert!(matches!(commit, Err(ValidationError::DescriptionTooLong(_))));
+        let commit = CommitMessage::new(CommitType::Feat, None, long_desc, None, None);
+        assert!(matches!(
+            commit,
+            Err(ValidationError::DescriptionTooLong(_))
+        ));
     }
 
     #[test]
@@ -393,8 +357,9 @@ mod tests {
             "add feature".to_string(),
             None,
             None,
-        ).unwrap();
-        
+        )
+        .unwrap();
+
         assert_eq!(commit.to_conventional_commit(), "feat: add feature");
     }
 
@@ -406,8 +371,9 @@ mod tests {
             "fix bug".to_string(),
             None,
             None,
-        ).unwrap();
-        
+        )
+        .unwrap();
+
         assert_eq!(commit.to_conventional_commit(), "fix(parser): fix bug");
     }
 
@@ -419,8 +385,9 @@ mod tests {
             "add feature".to_string(),
             Some("This is the body".to_string()),
             None,
-        ).unwrap();
-        
+        )
+        .unwrap();
+
         assert_eq!(
             commit.to_conventional_commit(),
             "feat: add feature\n\nThis is the body"
@@ -435,8 +402,9 @@ mod tests {
             "change endpoint".to_string(),
             None,
             Some("Removes v1 API".to_string()),
-        ).unwrap();
-        
+        )
+        .unwrap();
+
         assert_eq!(
             commit.to_conventional_commit(),
             "feat(api)!: change endpoint\n\nBREAKING CHANGE: Removes v1 API"
@@ -451,12 +419,13 @@ mod tests {
             "implement OAuth".to_string(),
             Some("Added OAuth 2.0 support with refresh tokens".to_string()),
             Some("Old session-based auth is removed".to_string()),
-        ).unwrap();
-        
+        )
+        .unwrap();
+
         let expected = "feat(auth)!: implement OAuth\n\n\
                         Added OAuth 2.0 support with refresh tokens\n\n\
                         BREAKING CHANGE: Old session-based auth is removed";
-        
+
         assert_eq!(commit.to_conventional_commit(), expected);
     }
 }

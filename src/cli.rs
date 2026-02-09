@@ -1,12 +1,13 @@
-use std::io::{self, Write};
-use std::process::ExitCode;
-
+use crate::commit_executor::CommitExecutor;
 use crate::input_collector::{CommitData, InputCollector};
 use crate::staging_checker::StagingChecker;
+use std::io::{self, Write};
+use std::process::ExitCode;
 
 pub struct CliController {
     staging_checker: StagingChecker,
     input_collector: InputCollector,
+    commit_executor: CommitExecutor,
 }
 
 impl CliController {
@@ -14,6 +15,7 @@ impl CliController {
         Self {
             staging_checker: StagingChecker::new(),
             input_collector: InputCollector::new(),
+            commit_executor: CommitExecutor::new(),
         }
     }
 
@@ -61,27 +63,68 @@ impl CliController {
 
         // Step 3: Preview, confirm, and optionally edit loop
         loop {
-            // Show preview
-            match data.to_commit_message() {
+            // Create commit message from data for preview AND later use
+            let commit_message = match data.to_commit_message() {
                 Ok(commit) => {
                     println!("=== Preview ===");
                     println!();
                     println!("{}", commit.to_conventional_commit());
                     println!();
+                    commit
                 }
                 Err(e) => {
                     eprintln!("Error creating commit message: {}", e);
                     return ExitCode::FAILURE;
                 }
-            }
+            };
 
             // Ask for action
             match self.prompt_action() {
                 Ok(Action::Proceed) => {
                     println!();
-                    println!("✓ Commit message created successfully!");
-                    println!("(Git commit execution not yet implemented)");
-                    return ExitCode::SUCCESS;
+                    println!("Executing git commit...");
+
+                    // ACTUALLY EXECUTE THE COMMIT
+                    match self
+                        .commit_executor
+                        .execute(&commit_message.to_conventional_commit())
+                    {
+                        Ok(result) => {
+                            println!("✓ Commit created successfully!");
+                            println!("  SHA: {}", result.sha);
+                            println!("  Summary: {}", result.summary);
+                            return ExitCode::SUCCESS;
+                        }
+                        Err(e) => {
+                            eprintln!("✗ Failed to create commit: {}", e);
+
+                            // Offer to try dry-run to see what's wrong
+                            println!(
+                                "Would you like to try a dry-run to diagnose the issue? (y/N)"
+                            );
+                            print!("Choice: ");
+                            io::stdout().flush().ok();
+
+                            let mut input = String::new();
+                            io::stdin().read_line(&mut input).ok();
+
+                            if input.trim().to_lowercase() == "y" {
+                                match self
+                                    .commit_executor
+                                    .dry_run(&commit_message.to_conventional_commit())
+                                {
+                                    Ok(_) => println!(
+                                        "Dry-run succeeded. Please check your Git configuration."
+                                    ),
+                                    Err(dry_run_err) => {
+                                        println!("Dry-run also failed: {}", dry_run_err)
+                                    }
+                                }
+                            }
+
+                            return ExitCode::FAILURE;
+                        }
+                    }
                 }
                 Ok(Action::Edit) => {
                     match self.edit_commit(&mut data) {

@@ -152,7 +152,7 @@ impl Lexer {
 
         // Check for scope (enclosed in parentheses)
         if let Some(open_paren) = header_part.find('(') {
-            let close_paren = header_part.find(')').ok_or_else(|| {
+            let close_paren = header_part.rfind(')').ok_or_else(|| {
                 CompileError::LexerError("Unclosed scope parenthesis".to_string())
             })?;
 

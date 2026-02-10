@@ -68,21 +68,6 @@ impl Token {
             Token::Breaking | Token::Newline | Token::Eof => None,
         }
     }
-
-    /// Checks if this token represents a breaking change indicator
-    pub fn is_breaking(&self) -> bool {
-        matches!(self, Token::Breaking)
-    }
-
-    /// Checks if this token is a newline
-    pub fn is_newline(&self) -> bool {
-        matches!(self, Token::Newline)
-    }
-
-    /// Checks if this token marks the end of input
-    pub fn is_eof(&self) -> bool {
-        matches!(self, Token::Eof)
-    }
 }
 
 impl fmt::Display for Token {
@@ -151,27 +136,6 @@ mod tests {
         assert_eq!(Token::Breaking.value(), None);
         assert_eq!(Token::Newline.value(), None);
         assert_eq!(Token::Eof.value(), None);
-    }
-
-    #[test]
-    fn token_is_breaking_identifies_breaking_token() {
-        assert!(Token::Breaking.is_breaking());
-        assert!(!Token::Type("feat".to_string()).is_breaking());
-        assert!(!Token::Newline.is_breaking());
-    }
-
-    #[test]
-    fn token_is_newline_identifies_newline_token() {
-        assert!(Token::Newline.is_newline());
-        assert!(!Token::Type("feat".to_string()).is_newline());
-        assert!(!Token::Eof.is_newline());
-    }
-
-    #[test]
-    fn token_is_eof_identifies_eof_token() {
-        assert!(Token::Eof.is_eof());
-        assert!(!Token::Type("feat".to_string()).is_eof());
-        assert!(!Token::Newline.is_eof());
     }
 
     #[test]

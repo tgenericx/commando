@@ -94,7 +94,7 @@ impl fmt::Display for Token {
         match self {
             Token::Type(s) => write!(f, "Type({})", s),
             Token::Scope(s) => write!(f, "Scope({})", s),
-            Token::Colon => write!(f, "Colon"), // ADD THIS LINE
+            Token::Colon => write!(f, "Colon"),
             Token::Breaking => write!(f, "Breaking"),
             Token::Description(s) => {
                 let preview = if s.len() > 30 {

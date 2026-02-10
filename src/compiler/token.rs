@@ -16,8 +16,6 @@ pub enum Token {
     /// Represents the module or area affected by the commit
     Scope(String),
 
-    Colon,
-
     /// Breaking change indicator (the "!" symbol)
     /// Signals that this commit contains breaking changes
     Breaking,
@@ -50,7 +48,6 @@ impl Token {
         match self {
             Token::Type(_) => "Type",
             Token::Scope(_) => "Scope",
-            Token::Colon => "Colon",
             Token::Breaking => "Breaking",
             Token::Description(_) => "Description",
             Token::Body(_) => "Body",
@@ -65,7 +62,6 @@ impl Token {
         match self {
             Token::Type(s) => Some(s),
             Token::Scope(s) => Some(s),
-            Token::Colon => None,
             Token::Description(s) => Some(s),
             Token::Body(s) => Some(s),
             Token::Footer(s) => Some(s),
@@ -94,7 +90,6 @@ impl fmt::Display for Token {
         match self {
             Token::Type(s) => write!(f, "Type({})", s),
             Token::Scope(s) => write!(f, "Scope({})", s),
-            Token::Colon => write!(f, "Colon"),
             Token::Breaking => write!(f, "Breaking"),
             Token::Description(s) => {
                 let mut preview: String = s.chars().take(30).collect();
@@ -217,33 +212,5 @@ mod tests {
 
         assert_eq!(token1, token2);
         assert_ne!(token1, token3);
-    }
-
-    #[test]
-    fn token_colon_is_handled() {
-        let colon_token = Token::Colon;
-        assert_eq!(colon_token.type_name(), "Colon");
-        assert_eq!(colon_token.value(), None);
-        assert!(!colon_token.is_breaking());
-        assert!(!colon_token.is_newline());
-        assert!(!colon_token.is_eof());
-        assert_eq!(format!("{}", colon_token), "Colon");
-    }
-
-    #[test]
-    fn colon_token_equality() {
-        let colon1 = Token::Colon;
-        let colon2 = Token::Colon;
-        let not_colon = Token::Type("feat".to_string());
-
-        assert_eq!(colon1, colon2);
-        assert_ne!(colon1, not_colon);
-    }
-
-    #[test]
-    fn colon_token_cloning() {
-        let colon = Token::Colon;
-        let cloned = colon.clone();
-        assert_eq!(colon, cloned);
     }
 }

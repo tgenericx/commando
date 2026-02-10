@@ -10,7 +10,7 @@ pub enum CompileError {
     ParseError(String),
 
     /// Error during semantic validation
-    SemanticError(String),
+    SemanticError(ValidationError),
 
     /// Error during code generation
     CodeGenError(String),
@@ -34,6 +34,6 @@ impl std::error::Error for CompileError {}
 
 impl From<ValidationError> for CompileError {
     fn from(err: ValidationError) -> Self {
-        CompileError::SemanticError(err.to_string())
+        CompileError::SemanticError(err)
     }
 }

@@ -97,11 +97,10 @@ impl fmt::Display for Token {
             Token::Colon => write!(f, "Colon"),
             Token::Breaking => write!(f, "Breaking"),
             Token::Description(s) => {
-                let preview = if s.len() > 30 {
-                    format!("{}...", &s[..30])
-                } else {
-                    s.clone()
-                };
+                let mut preview: String = s.chars().take(30).collect();
+                if s.chars().count() > 30 {
+                    preview.push_str("...");
+                }
                 write!(f, "Description({})", preview)
             }
             Token::Body(s) => {

@@ -1,21 +1,21 @@
 use crate::commit_message::ValidationError;
 
-/// Compiler errors that can occur during commit message processing
+/// Compiler errors that can occur during commit message processing.
+///
+/// This enum represents failures across the compiler pipeline stages:
+/// - lexical analysis
+/// - syntax analysis
+/// - semantic analysis (domain validation)
 #[derive(Debug, Clone, PartialEq)]
 pub enum CompileError {
     /// Error during lexical analysis (tokenization)
     LexerError(String),
 
-    /// Error during parsing (AST construction)
+    /// Error during syntax analysis (AST construction)
     ParseError(String),
 
-    /// Error during semantic validation
+    /// Error during semantic analysis (domain-level validation)
     SemanticError(ValidationError),
-
-    /// Error during code generation
-    CodeGenError(String),
-
-    NotImplemented,
 }
 
 impl std::fmt::Display for CompileError {
@@ -23,9 +23,7 @@ impl std::fmt::Display for CompileError {
         match self {
             CompileError::LexerError(msg) => write!(f, "Lexer error: {}", msg),
             CompileError::ParseError(msg) => write!(f, "Parse error: {}", msg),
-            CompileError::SemanticError(msg) => write!(f, "Semantic error: {}", msg),
-            CompileError::CodeGenError(msg) => write!(f, "Code generation error: {}", msg),
-            CompileError::NotImplemented => write!(f, "Feature not yet implemented"),
+            CompileError::SemanticError(err) => write!(f, "Semantic error: {}", err),
         }
     }
 }

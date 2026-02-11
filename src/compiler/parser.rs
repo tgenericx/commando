@@ -94,7 +94,9 @@ impl Parser {
 
     fn next(&mut self) -> Token {
         let token = self.peek();
-        self.pos += 1;
+        if self.pos < self.tokens.len() {
+            self.pos += 1;
+        }
         token
     }
 

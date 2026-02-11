@@ -116,26 +116,23 @@ impl SemanticAnalyzer {
             .iter()
             .find(|f| f.key == "BREAKING CHANGE" || f.key == "BREAKING-CHANGE");
 
-        // If header has !, footer must exist
-        if ast.header.breaking && breaking_footer.is_none() {
-            return Err(CompileError::SemanticError(
-                ValidationError::EmptyBreakingChange,
-            ));
-        }
+        let has_breaking_footer = breaking_footer.is_some();
+        let has_breaking_header = ast.header.breaking;
 
-        // If footer exists, header must have !
-        if breaking_footer.is_some() && !ast.header.breaking {
+        if has_breaking_header != has_breaking_footer {
             return Err(CompileError::SemanticError(
                 ValidationError::BreakingChangeMismatch,
             ));
         }
 
-        // Ensure breaking footer has content
-        if let Some(footer) = breaking_footer {
-            if footer.value.trim().is_empty() {
-                return Err(CompileError::SemanticError(
-                    ValidationError::EmptyBreakingChange,
-                ));
+        if has_breaking_header {
+            // This now implies has_breaking_footer is also true.
+            if let Some(footer) = breaking_footer {
+                if footer.value.trim().is_empty() {
+                    return Err(CompileError::SemanticError(
+                        ValidationError::EmptyBreakingChange,
+                    ));
+                }
             }
         }
 

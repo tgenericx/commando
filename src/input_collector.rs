@@ -1,4 +1,5 @@
-use crate::commit_message::{CommitMessage, CommitType, ValidationError};
+use crate::commit_message::{CommitMessage, ValidationError};
+use crate::commit_types::CommitType;
 use std::io::{self, Write};
 
 /// Interactive input collector for commit messages

@@ -1,6 +1,7 @@
 mod cli;
 mod commit_executor;
 mod commit_message;
+mod commit_types;
 mod compiler;
 mod input_collector;
 mod staging_checker;

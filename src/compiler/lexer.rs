@@ -14,7 +14,6 @@ use super::token::Token;
 #[derive(Debug)]
 pub struct Lexer {
     input: String,
-    position: usize,
 }
 
 impl Lexer {
@@ -22,7 +21,6 @@ impl Lexer {
     pub fn new(input: impl Into<String>) -> Self {
         Self {
             input: input.into(),
-            position: 0,
         }
     }
 

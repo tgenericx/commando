@@ -12,10 +12,6 @@ fn validate_and_get_ast(input: &str) -> Result<CommitAst, CompileError> {
     Ok(ast)
 }
 
-pub fn validate(input: &str) -> Result<(), CompileError> {
-    validate_and_get_ast(input).map(|_| ())
-}
-
 /// Compile a raw commit message into a validated Commit.
 pub fn compile(input: &str) -> Result<String, CompileError> {
     let ast = validate_and_get_ast(input)?;

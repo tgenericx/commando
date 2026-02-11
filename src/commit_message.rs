@@ -71,7 +71,11 @@ pub enum ValidationError {
     DescriptionTooLong(usize),
     InvalidScope(String),
     EmptyBreakingChange,
+    BreakingChangeMismatch,
     EmptyBody,
+    InvalidFooter(String),
+    DuplicateFooter(String),
+    InvalidIssueReference(String),
 }
 
 impl std::fmt::Display for ValidationError {
@@ -84,9 +88,11 @@ impl std::fmt::Display for ValidationError {
                     t
                 )
             }
+
             ValidationError::EmptyDescription => {
                 write!(f, "Description cannot be empty")
             }
+
             ValidationError::DescriptionTooLong(len) => {
                 write!(
                     f,
@@ -94,6 +100,7 @@ impl std::fmt::Display for ValidationError {
                     len
                 )
             }
+
             ValidationError::InvalidScope(s) => {
                 write!(
                     f,
@@ -101,11 +108,44 @@ impl std::fmt::Display for ValidationError {
                     s
                 )
             }
+
             ValidationError::EmptyBreakingChange => {
                 write!(f, "Breaking change description cannot be empty")
             }
+
+            ValidationError::BreakingChangeMismatch => {
+                write!(
+                    f,
+                    "Breaking change mismatch: header '!' and BREAKING CHANGE footer must both be present"
+                )
+            }
+
             ValidationError::EmptyBody => {
                 write!(f, "Body cannot be empty if provided")
+            }
+
+            ValidationError::InvalidFooter(line) => {
+                write!(
+                    f,
+                    "Invalid footer line: '{}'. Expected format 'KEY: value'",
+                    line
+                )
+            }
+
+            ValidationError::DuplicateFooter(key) => {
+                write!(
+                    f,
+                    "Duplicate footer key detected: '{}'. Footer keys must be unique",
+                    key
+                )
+            }
+
+            ValidationError::InvalidIssueReference(value) => {
+                write!(
+                    f,
+                    "Invalid issue reference: '{}'. Expected format like '#123'",
+                    value
+                )
             }
         }
     }

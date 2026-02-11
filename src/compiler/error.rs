@@ -1,10 +1,11 @@
 use crate::commit_message::ValidationError;
+use crate::compiler::token::Token;
 
 /// Compiler errors that can occur during commit message processing.
 ///
-/// This enum represents failures across the compiler pipeline stages:
+/// Represents failures across the compiler pipeline:
 /// - lexical analysis
-/// - syntax analysis
+/// - syntax analysis (parsing into AST)
 /// - semantic analysis (domain validation)
 #[derive(Debug, Clone, PartialEq)]
 pub enum CompileError {
@@ -12,23 +13,53 @@ pub enum CompileError {
     LexerError(String),
 
     /// Error during syntax analysis (AST construction)
-    ParseError(String),
+    ParseError(ParseError),
 
     /// Error during semantic analysis (domain-level validation)
     SemanticError(ValidationError),
+}
+
+/// Errors produced specifically by the parser.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ParseError {
+    /// A token was encountered that did not match what was expected
+    UnexpectedToken { expected: String, found: Token },
+
+    /// Footer line exists but is syntactically invalid
+    InvalidFooter(String),
+
+    /// Input ended unexpectedly
+    UnexpectedEof,
 }
 
 impl std::fmt::Display for CompileError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CompileError::LexerError(msg) => write!(f, "Lexer error: {}", msg),
-            CompileError::ParseError(msg) => write!(f, "Parse error: {}", msg),
+            CompileError::ParseError(err) => write!(f, "Parse error: {}", err),
             CompileError::SemanticError(err) => write!(f, "Semantic error: {}", err),
         }
     }
 }
 
+impl std::fmt::Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ParseError::UnexpectedToken { expected, found } => {
+                write!(f, "expected {}, found {}", expected, found)
+            }
+            ParseError::InvalidFooter(raw) => {
+                write!(f, "invalid footer syntax: {}", raw)
+            }
+            ParseError::UnexpectedEof => {
+                write!(f, "unexpected end of input")
+            }
+        }
+    }
+}
+
 impl std::error::Error for CompileError {}
+impl std::error::Error for ParseError {}
 
 impl From<ValidationError> for CompileError {
     fn from(err: ValidationError) -> Self {

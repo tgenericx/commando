@@ -14,7 +14,6 @@ pub struct SemanticAnalyzer;
 impl SemanticAnalyzer {
     /// Entry point
     pub fn analyze(ast: &CommitAst) -> Result<(), CompileError> {
-        Self::validate_type(&ast.header.type_name)?;
         Self::validate_description(&ast.header.description)?;
 
         if let Some(scope) = &ast.header.scope {
@@ -24,10 +23,6 @@ impl SemanticAnalyzer {
         Self::validate_footers(&ast.footers)?;
         Self::validate_breaking_changes(ast)?;
 
-        Ok(())
-    }
-
-    fn validate_type(_commit_type: &CommitType) -> Result<(), CompileError> {
         Ok(())
     }
 

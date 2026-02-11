@@ -1,9 +1,8 @@
 use std::collections::HashSet;
 
-use crate::commit_message::ValidationError;
-use crate::commit_types::CommitType;
 use crate::compiler::ast::{CommitAst, FooterNode};
 use crate::compiler::error::CompileError;
+use crate::validation::ValidationError;
 
 /// Semantic analyzer for commit ASTs
 ///

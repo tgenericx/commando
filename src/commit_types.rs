@@ -1,4 +1,4 @@
-use crate::commit_message::ValidationError;
+use crate::validation::ValidationError;
 
 /// Shared commit type definitions for the entire application
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

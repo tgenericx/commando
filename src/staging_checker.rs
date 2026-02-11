@@ -1,6 +1,6 @@
 use std::process::Command;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct StagingChecker;
 
 impl StagingChecker {

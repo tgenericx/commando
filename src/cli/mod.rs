@@ -10,6 +10,7 @@ use self::command::Command;
 mod command;
 mod error;
 
+use crate::git::CommitExecutor;
 pub use error::CliError;
 
 #[derive(Default)]
@@ -17,6 +18,7 @@ pub struct CliController {
     staging_checker: StagingChecker,
     editor: Editor,
     message_collector: MessageCollector,
+    commit_executor: CommitExecutor,
 }
 
 impl CliController {
@@ -25,6 +27,38 @@ impl CliController {
             staging_checker: StagingChecker::new(),
             editor: Editor::new(),
             message_collector: MessageCollector::new(),
+            commit_executor: CommitExecutor::new(),
+        }
+    }
+
+    fn run_commit(&self) -> Result<(), CliError> {
+        println!("Checking staged changes...");
+
+        match self.staging_checker.has_staged_changes() {
+            Ok(true) => println!("✓ Staged changes detected\n"),
+            Ok(false) => return Err(CliError::NoStagedChanges),
+            Err(e) => return Err(CliError::GitError(e)),
+        }
+
+        let message = self.message_collector.collect_from_editor(&self.editor)?;
+
+        if !self.preview_and_confirm(&message) {
+            println!("\nCommit cancelled.");
+            return Ok(());
+        }
+
+        // Execute the actual commit
+        match self.commit_executor.execute(&message) {
+            Ok(result) => {
+                println!("\n✓ Commit successful!");
+                println!("  SHA: {}", result.sha);
+                println!("  {}", result.summary);
+                Ok(())
+            }
+            Err(e) => {
+                eprintln!("\n✗ Commit failed: {}", e);
+                Err(e)
+            }
         }
     }
 
@@ -55,28 +89,6 @@ impl CliController {
         }
     }
 
-    fn run_commit(&self) -> Result<(), CliError> {
-        println!("Checking staged changes...");
-
-        match self.staging_checker.has_staged_changes() {
-            Ok(true) => println!("✓ Staged changes detected\n"),
-            Ok(false) => return Err(CliError::NoStagedChanges),
-            Err(e) => return Err(CliError::GitError(e)),
-        }
-
-        let message = self.message_collector.collect_from_editor(&self.editor)?;
-
-        if !self.preview_and_confirm(&message) {
-            println!("\nCommit cancelled.");
-            return Ok(());
-        }
-
-        println!("\n✓ Commit successful! (placeholder)");
-        println!("  Message: {}", message.lines().next().unwrap_or(""));
-
-        Ok(())
-    }
-
     fn validate_only(&self, message: &str) -> Result<(), CliError> {
         println!("🔍 Validating: \"{}\"", message);
 
@@ -88,7 +100,7 @@ impl CliController {
             }
             Err(e) => {
                 eprintln!("✗ {}", e);
-                Err(CliError::CompileError(message.to_string())) // Fixed: CliError::CompileError, not CompileError
+                Err(CliError::CompileError(message.to_string()))
             }
         }
     }
@@ -113,7 +125,7 @@ impl CliController {
         println!("  commando [COMMAND]");
         println!();
         println!("COMMANDS:");
-        println!("  (none)          Interactive commit (default)");
+        println!("  (none)          Opens editor for message input (default)");
         println!("  --validate MSG  Validate a commit message");
         println!("  --help, -h      Show this help");
         println!("  --version, -v   Show version");

@@ -1,4 +1,6 @@
-pub const TEMPLATE: &str = r#"# Please enter the commit message for your changes.
+pub const TEMPLATE: &str = r#"
+
+# Please enter the commit message for your changes.
 # Lines starting with '#' will be ignored.
 
 # <type>[scope]: <description>

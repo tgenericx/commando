@@ -1,3 +1,4 @@
+use crate::commit_types::CommitType;
 use crate::compiler::ast::{BodyNode, CommitAst, FooterNode, HeaderNode};
 use crate::compiler::error::{CompileError, ParseError};
 use crate::compiler::token::Token;
@@ -30,7 +31,12 @@ impl Parser {
 
     fn parse_header(&mut self) -> Result<HeaderNode, CompileError> {
         let type_name = match self.next() {
-            Token::Type(s) => s,
+            Token::Type(s) => CommitType::from_str(&s).map_err(|_| {
+                CompileError::ParseError(ParseError::UnexpectedToken {
+                    expected: "valid commit type".to_string(),
+                    found: Token::Type(s.clone()),
+                })
+            })?,
             t => return Err(self.unexpected("Type", t)),
         };
 

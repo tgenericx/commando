@@ -41,7 +41,7 @@ impl CommitFormatter {
     fn format_header(ast: &CommitAst) -> String {
         let mut header = String::new();
 
-        header.push_str(&ast.header.type_name);
+        header.push_str(ast.header.type_name.as_str());
 
         if let Some(scope) = &ast.header.scope {
             header.push('(');

@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use crate::commit_message::ValidationError;
+use crate::commit_types::CommitType;
 use crate::compiler::ast::{CommitAst, FooterNode};
 use crate::compiler::error::CompileError;
 
@@ -26,19 +27,7 @@ impl SemanticAnalyzer {
         Ok(())
     }
 
-    /// Allowed commit types
-    fn allowed_types() -> &'static [&'static str] {
-        &[
-            "feat", "fix", "docs", "style", "refactor", "perf", "test", "chore",
-        ]
-    }
-
-    fn validate_type(type_name: &str) -> Result<(), CompileError> {
-        if !Self::allowed_types().contains(&type_name) {
-            return Err(CompileError::SemanticError(
-                ValidationError::InvalidCommitType(type_name.to_string()),
-            ));
-        }
+    fn validate_type(_commit_type: &CommitType) -> Result<(), CompileError> {
         Ok(())
     }
 
@@ -84,14 +73,12 @@ impl SemanticAnalyzer {
         for footer in footers {
             Self::validate_footer(footer)?;
 
-            // Detect duplicate footer keys
             if !seen_keys.insert(footer.key.clone()) {
                 return Err(CompileError::SemanticError(
                     ValidationError::DuplicateFooter(footer.key.clone()),
                 ));
             }
 
-            // Validate issue references (optional rule)
             if Self::is_issue_footer(&footer.key) {
                 Self::validate_issue_reference(&footer.value)?;
             }
@@ -126,7 +113,6 @@ impl SemanticAnalyzer {
         }
 
         if has_breaking_header {
-            // This now implies has_breaking_footer is also true.
             if let Some(footer) = breaking_footer {
                 if footer.value.trim().is_empty() {
                     return Err(CompileError::SemanticError(
@@ -144,7 +130,6 @@ impl SemanticAnalyzer {
     }
 
     fn validate_issue_reference(value: &str) -> Result<(), CompileError> {
-        // Basic rule: must contain #number
         if !value.contains('#') {
             return Err(CompileError::SemanticError(
                 ValidationError::InvalidIssueReference(value.to_string()),

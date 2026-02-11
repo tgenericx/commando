@@ -1,3 +1,5 @@
+use crate::commit_types::CommitType;
+
 /// Root node of commit AST
 #[derive(Debug, Clone, PartialEq)]
 pub struct CommitAst {
@@ -9,7 +11,7 @@ pub struct CommitAst {
 /// Header node
 #[derive(Debug, Clone, PartialEq)]
 pub struct HeaderNode {
-    pub type_name: String,
+    pub type_name: CommitType,
     pub scope: Option<String>,
     pub breaking: bool,
     pub description: String,

@@ -118,7 +118,10 @@ impl Parser {
 
 fn split_footer(raw: &str) -> Option<(String, String)> {
     let mut parts = raw.splitn(2, ':');
-    let key = parts.next()?.trim().to_string();
-    let value = parts.next()?.trim().to_string();
-    Some((key, value))
+    let key = parts.next()?.trim();
+    let value = parts.next()?.trim();
+    if key.is_empty() || value.is_empty() {
+        return None;
+    }
+    Some((key.to_string(), value.to_string()))
 }

@@ -48,7 +48,7 @@ impl CommitType {
     }
 
     pub fn from_str(s: &str) -> Result<Self, ValidationError> {
-        match s.to_lowercase().as_str() {
+        match s.trim().to_lowercase().as_str() {
             "feat" => Ok(Self::Feat),
             "fix" => Ok(Self::Fix),
             "docs" => Ok(Self::Docs),
@@ -60,7 +60,7 @@ impl CommitType {
             "ci" => Ok(Self::Ci),
             "chore" => Ok(Self::Chore),
             "revert" => Ok(Self::Revert),
-            _ => Err(ValidationError::InvalidCommitType(s.to_string())),
+            _ => Err(ValidationError::InvalidCommitType(s.trim().to_string())),
         }
     }
 

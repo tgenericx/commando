@@ -64,10 +64,7 @@ impl CommitType {
         }
     }
 
-    pub fn all_as_str() -> &'static [&'static str] {
-        &[
-            "feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore",
-            "revert",
-        ]
+    pub fn all_as_str() -> Vec<&'static str> {
+        Self::ALL_TYPES.iter().map(|t| t.as_str()).collect()
     }
 }

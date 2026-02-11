@@ -1,5 +1,5 @@
-use crate::commit_message::ValidationError;
 use crate::compiler::token::Token;
+use crate::validation::ValidationError;
 
 /// Compiler errors that can occur during commit message processing.
 ///
@@ -27,9 +27,6 @@ pub enum ParseError {
 
     /// Footer line exists but is syntactically invalid
     InvalidFooter(String),
-
-    /// Input ended unexpectedly
-    UnexpectedEof,
 }
 
 impl std::fmt::Display for CompileError {
@@ -50,9 +47,6 @@ impl std::fmt::Display for ParseError {
             }
             ParseError::InvalidFooter(raw) => {
                 write!(f, "invalid footer syntax: {}", raw)
-            }
-            ParseError::UnexpectedEof => {
-                write!(f, "unexpected end of input")
             }
         }
     }

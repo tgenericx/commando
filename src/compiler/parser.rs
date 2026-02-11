@@ -31,12 +31,7 @@ impl Parser {
 
     fn parse_header(&mut self) -> Result<HeaderNode, CompileError> {
         let type_name = match self.next() {
-            Token::Type(s) => CommitType::from_str(&s).map_err(|_| {
-                CompileError::ParseError(ParseError::UnexpectedToken {
-                    expected: "valid commit type".to_string(),
-                    found: Token::Type(s.clone()),
-                })
-            })?,
+            Token::Type(s) => CommitType::from_str(&s).map_err(CompileError::SemanticError)?,
             t => return Err(self.unexpected("Type", t)),
         };
 

@@ -33,7 +33,19 @@ impl MessageCollector {
             let message = parser::strip_comments(&content);
 
             if message.is_empty() {
-                eprintln!("\n✗ Empty commit message. Please enter a message.");
+                eprintln!("\n✗ No commit message provided.");
+                eprint!("This will abort the commit. Continue? (y/N): ");
+
+                let mut choice = String::new();
+                std::io::stdin().read_line(&mut choice).ok();
+
+                if choice.trim().to_lowercase() == "y" {
+                    let _ = file::cleanup(&path);
+                    return Err(CliError::EmptyMessage);
+                }
+
+                // User wants to try again
+                eprintln!("Reopening editor...\n");
                 continue;
             }
 
@@ -44,7 +56,7 @@ impl MessageCollector {
                 }
                 Err(err) => {
                     eprintln!("\n✗ Compilation failed:");
-                    eprintln!("{}", err); // Just print the error as is
+                    eprintln!("{}", err);
 
                     eprint!("\nReopen editor to fix? (Y/n): ");
                     let mut choice = String::new();

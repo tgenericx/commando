@@ -88,8 +88,79 @@ impl CliController {
                 Ok(())
             }
             Command::Validate(msg) => self.validate_only(&msg),
-            Command::Commit => self.run_commit(),
             Command::Interactive => self.run_interactive(),
+            Command::Message(msg) => self.run_direct(&msg),
+            Command::Editor => self.run_editor(),
+        }
+    }
+
+    fn run_direct(&self, message: &str) -> Result<(), CliError> {
+        println!("📝 Direct message mode");
+
+        // Validate first
+        match compile(message) {
+            Ok(formatted) => {
+                // Check staging
+                match self.staging_checker.has_staged_changes() {
+                    Ok(true) => println!("✓ Staged changes detected\n"),
+                    Ok(false) => return Err(CliError::NoStagedChanges),
+                    Err(e) => return Err(CliError::GitError(e)),
+                }
+
+                if !self.preview_and_confirm(&formatted) {
+                    println!("\nCommit cancelled.");
+                    return Ok(());
+                }
+
+                match self.commit_executor.execute(&formatted) {
+                    Ok(result) => {
+                        println!("\n✓ Commit successful!");
+                        println!("  SHA: {}", result.sha);
+                        println!("  {}", result.summary);
+                        Ok(())
+                    }
+                    Err(e) => {
+                        eprintln!("\n✗ Commit failed: {}", e);
+                        Err(e)
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!("✗ Invalid commit message:");
+                eprintln!("  {}", e);
+                eprintln!("\nRun with -i for interactive mode or -m alone to open editor.");
+                Err(CliError::CompileError(message.to_string()))
+            }
+        }
+    }
+
+    fn run_editor(&self) -> Result<(), CliError> {
+        println!("📝 Editor mode (empty -m flag)");
+
+        match self.staging_checker.has_staged_changes() {
+            Ok(true) => println!("✓ Staged changes detected\n"),
+            Ok(false) => return Err(CliError::NoStagedChanges),
+            Err(e) => return Err(CliError::GitError(e)),
+        }
+
+        let message = self.message_collector.collect_from_editor(&self.editor)?;
+
+        if !self.preview_and_confirm(&message) {
+            println!("\nCommit cancelled.");
+            return Ok(());
+        }
+
+        match self.commit_executor.execute(&message) {
+            Ok(result) => {
+                println!("\n✓ Commit successful!");
+                println!("  SHA: {}", result.sha);
+                println!("  {}", result.summary);
+                Ok(())
+            }
+            Err(e) => {
+                eprintln!("\n✗ Commit failed: {}", e);
+                Err(e)
+            }
         }
     }
 
@@ -168,13 +239,16 @@ impl CliController {
         println!("commando - Conventional Commit Tool");
         println!();
         println!("USAGE:");
-        println!("  commando [COMMAND]");
+        println!("  commando [OPTIONS]");
         println!();
-        println!("COMMANDS:");
-        println!("  (none)          Opens editor for message input (default)");
-        println!("  --validate MSG  Validate a commit message");
-        println!("  --help, -h      Show this help");
-        println!("  --version, -v   Show version");
+        println!("OPTIONS:");
+        println!("  (none)          Interactive mode - guided prompts");
+        println!("  -i, --interactive  Interactive mode (explicit)");
+        println!("  -m, --message MSG  Commit with message (validates)");
+        println!("  -m, --message      Open editor to write message");
+        println!("  --validate MSG     Validate message only");
+        println!("  -h, --help         Show this help");
+        println!("  -v, --version      Show version");
     }
 
     fn print_version(&self) {

@@ -1,4 +1,5 @@
 use crate::compiler::compile::compile;
+use crate::input::{InputCollector, InputError, InputMode};
 use std::process::ExitCode;
 
 use crate::editor::Editor;
@@ -19,6 +20,7 @@ pub struct CliController {
     editor: Editor,
     message_collector: MessageCollector,
     commit_executor: CommitExecutor,
+    interactive_collector: InputCollector,
 }
 
 impl CliController {
@@ -28,6 +30,7 @@ impl CliController {
             editor: Editor::new(),
             message_collector: MessageCollector::new(),
             commit_executor: CommitExecutor::new(),
+            interactive_collector: InputCollector::new(),
         }
     }
 
@@ -86,6 +89,49 @@ impl CliController {
             }
             Command::Validate(msg) => self.validate_only(&msg),
             Command::Commit => self.run_commit(),
+            Command::Interactive => self.run_interactive(),
+        }
+    }
+
+    fn run_interactive(&self) -> Result<(), CliError> {
+        println!("🔧 Interactive mode");
+
+        // Check staging first
+        match self.staging_checker.has_staged_changes() {
+            Ok(true) => println!("✓ Staged changes detected\n"),
+            Ok(false) => return Err(CliError::NoStagedChanges),
+            Err(e) => return Err(CliError::GitError(e)),
+        }
+
+        // Collect message via interactive prompts
+        let message = self
+            .interactive_collector
+            .collect(InputMode::Interactive)
+            .map_err(|e| match e {
+                InputError::Cancelled => CliError::UserCancelled,
+                InputError::Empty => CliError::EmptyMessage,
+                InputError::Compilation(ce) => CliError::CompileError(ce.to_string()),
+                InputError::Io(ioe) => CliError::Io(ioe),
+            })?;
+
+        // Preview and confirm
+        if !self.preview_and_confirm(&message) {
+            println!("\nCommit cancelled.");
+            return Ok(());
+        }
+
+        // Execute the commit
+        match self.commit_executor.execute(&message) {
+            Ok(result) => {
+                println!("\n✓ Commit successful!");
+                println!("  SHA: {}", result.sha);
+                println!("  {}", result.summary);
+                Ok(())
+            }
+            Err(e) => {
+                eprintln!("\n✗ Commit failed: {}", e);
+                Err(e)
+            }
         }
     }
 

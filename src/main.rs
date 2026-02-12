@@ -3,6 +3,7 @@ mod commit_types;
 mod compiler;
 mod editor;
 mod git;
+mod input;
 mod message;
 mod staging_checker;
 mod validation;

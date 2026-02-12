@@ -9,6 +9,7 @@ pub enum CliError {
     EmptyMessage,
     CompileFailed,
     CompileError(String),
+    UserCancelled,
 }
 
 impl std::fmt::Display for CliError {
@@ -21,6 +22,7 @@ impl std::fmt::Display for CliError {
             CliError::EmptyMessage => write!(f, "Empty commit message"),
             CliError::CompileFailed => write!(f, "Commit message compilation failed"),
             CliError::CompileError(e) => write!(f, "Compile error: {}", e),
+            CliError::UserCancelled => write!(f, "Cancelled by user"),
         }
     }
 }

@@ -14,6 +14,15 @@ impl Prompt {
         }
     }
 
+    pub fn ask(&self, label: &str) -> Result<String, InputError> {
+        print!("{}: ", label);
+        io::stdout().flush().map_err(InputError::Io)?;
+
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).map_err(InputError::Io)?;
+        Ok(input.trim().to_string())
+    }
+
     pub fn commit_type(&self) -> Result<String, InputError> {
         println!("Commit Type:");
         println!("  feat      - New feature");
@@ -144,15 +153,6 @@ impl Prompt {
         } else {
             Some(footers)
         })
-    }
-
-    fn ask(&self, label: &str) -> Result<String, InputError> {
-        print!("{}: ", label);
-        io::stdout().flush().map_err(InputError::Io)?;
-
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).map_err(InputError::Io)?;
-        Ok(input.trim().to_string())
     }
 
     fn read_multiline(&self) -> Result<String, InputError> {

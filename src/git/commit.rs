@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use crate::cli::CliError;
+use crate::{cli::CliError, git::CommitResult};
 
 #[derive(Debug, Default)]
 pub struct CommitExecutor;
@@ -33,10 +33,4 @@ impl CommitExecutor {
 
         Ok(CommitResult { sha, summary })
     }
-}
-
-#[derive(Debug, Default)]
-pub struct CommitResult {
-    pub sha: String,
-    pub summary: String,
 }

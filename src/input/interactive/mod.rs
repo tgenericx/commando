@@ -1,63 +1,186 @@
-use crate:: compiler:: compile:: compile;
-use crate:: input:: InputError;
+use crate::compiler::compile::compile;
+use crate::input::InputError;
 
-mod prompt;
 mod builder;
+mod prompt;
 mod validator;
 
-pub use prompt:: Prompt;
-pub use builder:: MessageBuilder;
+pub use builder::MessageBuilder;
+pub use prompt::Prompt;
 
+#[derive(Default)]
 pub struct InteractiveMode {
-  prompt: Prompt,
+    prompt: Prompt,
     builder: MessageBuilder,
 }
 
 impl InteractiveMode {
-    pub fn new () -> Self {
+    pub fn new() -> Self {
         Self {
-      prompt: Prompt:: new (),
-        builder: MessageBuilder:: new (),
+            prompt: Prompt::new(),
+            builder: MessageBuilder::new(),
         }
-  }
+    }
 
-    pub fn collect(& mut self) -> Result < String, InputError > {
-    println!("\n=== Interactive Commit Builder ===\n");
+    pub fn collect(&mut self) -> Result<String, InputError> {
+        println!("\n=== Interactive Commit Builder ===\n");
 
-        // Collect all parts
-        let ty = self.prompt.commit_type() ?;
-    self.builder.with_type(ty);
+        loop {
+            // Build message step by step
+            if self.builder.commit_type().is_none() {
+                let ty = self.prompt.commit_type()?;
+                self.builder.with_type(ty);
+                continue;
+            }
 
-    let scope = self.prompt.scope() ?;
-    self.builder.with_scope(scope);
+            if self.builder.scope().is_none() {
+                let scope = self.prompt.scope()?;
+                self.builder.with_scope(scope);
+                continue;
+            }
 
-    let breaking = self.prompt.breaking() ?;
-    self.builder.with_breaking(breaking);
+            if self.builder.breaking().is_none() {
+                let breaking = self.prompt.breaking()?;
+                self.builder.with_breaking(breaking);
+                continue;
+            }
 
-    let description = self.prompt.description() ?;
-    self.builder.with_description(description);
+            if self.builder.description().is_none() {
+                let description = self.prompt.description()?;
+                self.builder.with_description(description);
+                continue;
+            }
 
-    let body = self.prompt.body() ?;
-    self.builder.with_body(body);
+            if self.builder.body().is_none() {
+                let body = self.prompt.body()?;
+                self.builder.with_body(body);
+                continue;
+            }
 
-    if breaking {
-    let breaking_desc = self.prompt.breaking_description() ?;
-    self.builder.with_breaking_description(breaking_desc);
-  }
+            if self.builder.breaking() == Some(true)
+                && self.builder.breaking_description().is_none()
+            {
+                let breaking_desc = self.prompt.breaking_description()?;
+                self.builder.with_breaking_description(breaking_desc);
+                continue;
+            }
 
-  let footers = self.prompt.footers() ?;
-  self.builder.with_footers(footers);
+            if self.builder.footers().is_none() {
+                let footers = self.prompt.footers()?;
+                self.builder.with_footers(footers);
+            }
 
-  // Build and compile
-  let message = self.builder.build() ?;
-  let formatted = compile(& message) ?;
+            // All fields collected, show preview
+            let message = self.builder.build()?;
 
-  Ok(formatted)
-}
-}
+            println!("\n{}", "=".repeat(50));
+            println!("CURRENT MESSAGE:");
+            println!("{}", message);
+            println!("{}", "=".repeat(50));
+            println!();
 
-impl Default for InteractiveMode {
-  fn default() -> Self {
-    Self:: new()
-  }
+            println!("Options:");
+            println!("  [c] Continue and commit");
+            println!("  [e] Edit message");
+            println!("  [r] Restart from beginning");
+            println!("  [q] Cancel");
+
+            let choice = self.prompt.ask("Choice")?;
+
+            match choice.to_lowercase().as_str() {
+                "c" | "continue" => {
+                    let formatted = compile(&message)?;
+                    return Ok(formatted);
+                }
+                "e" | "edit" => {
+                    self.prompt_edit_field()?;
+                }
+                "r" | "restart" => {
+                    self.builder = MessageBuilder::new();
+                    println!("\nRestarting...\n");
+                }
+                "q" | "quit" | "cancel" => {
+                    return Err(InputError::Cancelled);
+                }
+                _ => {
+                    println!("  ✗ Invalid choice\n");
+                }
+            }
+        }
+    }
+
+    fn prompt_edit_field(&mut self) -> Result<(), InputError> {
+        println!("\nWhich field do you want to edit?");
+        println!(
+            "  [1] Type (current: {})",
+            self.builder
+                .commit_type()
+                .map(|s| s.as_str())
+                .unwrap_or("none")
+        );
+        println!(
+            "  [2] Scope (current: {})",
+            self.builder.scope().map(|s| s.as_str()).unwrap_or("none")
+        );
+        println!(
+            "  [3] Breaking change (current: {})",
+            if self.builder.breaking() == Some(true) {
+                "yes"
+            } else {
+                "no"
+            }
+        );
+        println!(
+            "  [4] Description (current: {})",
+            self.builder
+                .description()
+                .map(|s| s.as_str())
+                .unwrap_or("none")
+        );
+        println!("  [5] Body");
+        println!("  [6] Breaking description");
+        println!("  [7] Footers");
+        println!("  [b] Back");
+
+        let choice = self.prompt.ask("Field")?;
+
+        match choice.as_str() {
+            "1" => {
+                let ty = self.prompt.commit_type()?;
+                self.builder.with_type(ty);
+            }
+            "2" => {
+                let scope = self.prompt.scope()?;
+                self.builder.with_scope(scope);
+            }
+            "3" => {
+                let breaking = self.prompt.breaking()?;
+                self.builder.with_breaking(breaking);
+            }
+            "4" => {
+                let description = self.prompt.description()?;
+                self.builder.with_description(description);
+            }
+            "5" => {
+                let body = self.prompt.body()?;
+                self.builder.with_body(body);
+            }
+            "6" => {
+                if self.builder.breaking() == Some(true) {
+                    let breaking_desc = self.prompt.breaking_description()?;
+                    self.builder.with_breaking_description(breaking_desc);
+                } else {
+                    println!("  ✗ Not a breaking change");
+                }
+            }
+            "7" => {
+                let footers = self.prompt.footers()?;
+                self.builder.with_footers(footers);
+            }
+            "b" | "back" => {}
+            _ => println!("  ✗ Invalid choice"),
+        }
+
+        Ok(())
+    }
 }

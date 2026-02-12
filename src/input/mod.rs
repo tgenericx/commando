@@ -1,17 +1,13 @@
 use crate::compiler::compile::compile;
 
 mod error;
-mod file;
 mod interactive;
-mod paste;
 
 pub use error::InputError;
 
 #[derive(Debug)]
 pub enum InputMode {
     Interactive,
-    Paste,
-    File(String),
     Validate(String),
     Edit(String),
 }
@@ -29,14 +25,6 @@ impl InputCollector {
             InputMode::Interactive => {
                 let mut interactive = interactive::InteractiveMode::new();
                 interactive.collect()
-            }
-            InputMode::Paste => {
-                let paste = paste::PasteMode::new();
-                paste.collect()
-            }
-            InputMode::File(path) => {
-                let file = file::FileMode::new();
-                file.collect(&path)
             }
             InputMode::Validate(msg) => {
                 compile(&msg)?;

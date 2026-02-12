@@ -10,16 +10,15 @@ use crate::validation::ValidationError;
 #[derive(Debug, Clone, PartialEq)]
 pub enum CompileError {
     /// Error during lexical analysis (tokenization)
-    LexerError(String),
+    Lexer(String),
 
     /// Error during syntax analysis (AST construction)
-    ParseError(ParseError),
+    Parse(ParseError),
 
     /// Error during semantic analysis (domain-level validation)
-    SemanticError(ValidationError),
+    Semantic(ValidationError),
 }
 
-/// Errors produced specifically by the parser.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParseError {
     /// A token was encountered that did not match what was expected
@@ -32,9 +31,9 @@ pub enum ParseError {
 impl std::fmt::Display for CompileError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            CompileError::LexerError(msg) => write!(f, "Lexer error: {}", msg),
-            CompileError::ParseError(err) => write!(f, "Parse error: {}", err),
-            CompileError::SemanticError(err) => write!(f, "Semantic error: {}", err),
+            CompileError::Lexer(msg) => write!(f, "Lexer error: {}", msg),
+            CompileError::Parse(err) => write!(f, "Parse error: {}", err),
+            CompileError::Semantic(err) => write!(f, "Semantic error: {}", err),
         }
     }
 }
@@ -57,6 +56,6 @@ impl std::error::Error for ParseError {}
 
 impl From<ValidationError> for CompileError {
     fn from(err: ValidationError) -> Self {
-        CompileError::SemanticError(err)
+        CompileError::Semantic(err)
     }
 }

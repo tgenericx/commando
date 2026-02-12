@@ -75,7 +75,7 @@ impl CommitFormatter {
             }
         }
 
-        breaking.into_iter().chain(others.into_iter()).collect()
+        breaking.into_iter().chain(others).collect()
     }
 
     fn wrap_text(text: &str) -> String {

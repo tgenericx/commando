@@ -102,9 +102,9 @@ impl Lexer {
         }
 
         // Find the colon that separates header from description
-        let colon_pos = header.find(':').ok_or_else(|| {
-            CompileError::Lexer("Missing ':' separator in header".to_string())
-        })?;
+        let colon_pos = header
+            .find(':')
+            .ok_or_else(|| CompileError::Lexer("Missing ':' separator in header".to_string()))?;
 
         let header_part = &header[..colon_pos];
         let description = header[colon_pos + 1..].trim();
@@ -150,9 +150,9 @@ impl Lexer {
 
         // Check for scope (enclosed in parentheses)
         if let Some(open_paren) = header_part.find('(') {
-            let close_paren = header_part.rfind(')').ok_or_else(|| {
-                CompileError::Lexer("Unclosed scope parenthesis".to_string())
-            })?;
+            let close_paren = header_part
+                .rfind(')')
+                .ok_or_else(|| CompileError::Lexer("Unclosed scope parenthesis".to_string()))?;
 
             if close_paren < open_paren {
                 return Err(CompileError::Lexer("Malformed scope".to_string()));

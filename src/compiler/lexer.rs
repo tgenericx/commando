@@ -98,19 +98,19 @@ impl Lexer {
 
         let header = header.trim();
         if header.is_empty() {
-            return Err(CompileError::LexerError("Empty header line".to_string()));
+            return Err(CompileError::Lexer("Empty header line".to_string()));
         }
 
         // Find the colon that separates header from description
         let colon_pos = header.find(':').ok_or_else(|| {
-            CompileError::LexerError("Missing ':' separator in header".to_string())
+            CompileError::Lexer("Missing ':' separator in header".to_string())
         })?;
 
         let header_part = &header[..colon_pos];
         let description = header[colon_pos + 1..].trim();
 
         if description.is_empty() {
-            return Err(CompileError::LexerError("Empty description".to_string()));
+            return Err(CompileError::Lexer("Empty description".to_string()));
         }
 
         // Parse header_part for type, scope, and breaking
@@ -151,28 +151,28 @@ impl Lexer {
         // Check for scope (enclosed in parentheses)
         if let Some(open_paren) = header_part.find('(') {
             let close_paren = header_part.rfind(')').ok_or_else(|| {
-                CompileError::LexerError("Unclosed scope parenthesis".to_string())
+                CompileError::Lexer("Unclosed scope parenthesis".to_string())
             })?;
 
             if close_paren < open_paren {
-                return Err(CompileError::LexerError("Malformed scope".to_string()));
+                return Err(CompileError::Lexer("Malformed scope".to_string()));
             }
 
             let commit_type = header_part[..open_paren].trim().to_string();
             let scope = header_part[open_paren + 1..close_paren].trim().to_string();
 
             if commit_type.is_empty() {
-                return Err(CompileError::LexerError("Empty commit type".to_string()));
+                return Err(CompileError::Lexer("Empty commit type".to_string()));
             }
 
             if scope.is_empty() {
-                return Err(CompileError::LexerError("Empty scope".to_string()));
+                return Err(CompileError::Lexer("Empty scope".to_string()));
             }
 
             // Check for extra content after closing parenthesis
             let after_paren = header_part[close_paren + 1..].trim();
             if !after_paren.is_empty() {
-                return Err(CompileError::LexerError(
+                return Err(CompileError::Lexer(
                     "Unexpected content after scope".to_string(),
                 ));
             }
@@ -183,7 +183,7 @@ impl Lexer {
             let commit_type = header_part.trim().to_string();
 
             if commit_type.is_empty() {
-                return Err(CompileError::LexerError("Empty commit type".to_string()));
+                return Err(CompileError::Lexer("Empty commit type".to_string()));
             }
 
             Ok((commit_type, None, has_breaking))

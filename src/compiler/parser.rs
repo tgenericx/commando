@@ -31,7 +31,7 @@ impl Parser {
 
     fn parse_header(&mut self) -> Result<HeaderNode, CompileError> {
         let type_name = match self.next() {
-            Token::Type(s) => CommitType::from_str(&s).map_err(CompileError::SemanticError)?,
+            Token::Type(s) => CommitType::from_str(&s).map_err(CompileError::Semantic)?,
             t => return Err(self.unexpected("Type", t)),
         };
 
@@ -79,7 +79,7 @@ impl Parser {
             self.advance();
 
             let (key, value) = split_footer(&raw)
-                .ok_or_else(|| CompileError::ParseError(ParseError::InvalidFooter(raw.clone())))?;
+                .ok_or_else(|| CompileError::Parse(ParseError::InvalidFooter(raw.clone())))?;
 
             footers.push(FooterNode { key, value });
 
@@ -112,7 +112,7 @@ impl Parser {
     }
 
     fn unexpected(&self, expected: &str, found: Token) -> CompileError {
-        CompileError::ParseError(ParseError::UnexpectedToken {
+        CompileError::Parse(ParseError::UnexpectedToken {
             expected: expected.to_string(),
             found,
         })

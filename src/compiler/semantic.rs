@@ -29,15 +29,13 @@ impl SemanticAnalyzer {
         let trimmed = desc.trim();
 
         if trimmed.is_empty() {
-            return Err(CompileError::SemanticError(
-                ValidationError::EmptyDescription,
-            ));
+            return Err(CompileError::Semantic(ValidationError::EmptyDescription));
         }
 
         if trimmed.len() > 72 {
-            return Err(CompileError::SemanticError(
-                ValidationError::DescriptionTooLong(trimmed.len()),
-            ));
+            return Err(CompileError::Semantic(ValidationError::DescriptionTooLong(
+                trimmed.len(),
+            )));
         }
 
         Ok(())
@@ -45,14 +43,14 @@ impl SemanticAnalyzer {
 
     fn validate_scope(scope: &str) -> Result<(), CompileError> {
         if scope.trim().is_empty() {
-            return Err(CompileError::SemanticError(ValidationError::InvalidScope(
+            return Err(CompileError::Semantic(ValidationError::InvalidScope(
                 scope.to_string(),
             )));
         }
 
         // Optional: enforce lowercase scopes
         if scope.chars().any(|c| c.is_uppercase()) {
-            return Err(CompileError::SemanticError(ValidationError::InvalidScope(
+            return Err(CompileError::Semantic(ValidationError::InvalidScope(
                 scope.to_string(),
             )));
         }
@@ -68,9 +66,9 @@ impl SemanticAnalyzer {
             Self::validate_footer(footer)?;
 
             if !seen_keys.insert(footer.key.clone()) {
-                return Err(CompileError::SemanticError(
-                    ValidationError::DuplicateFooter(footer.key.clone()),
-                ));
+                return Err(CompileError::Semantic(ValidationError::DuplicateFooter(
+                    footer.key.clone(),
+                )));
             }
 
             if Self::is_issue_footer(&footer.key) {
@@ -83,7 +81,7 @@ impl SemanticAnalyzer {
 
     fn validate_footer(footer: &FooterNode) -> Result<(), CompileError> {
         if footer.key.trim().is_empty() || footer.value.trim().is_empty() {
-            return Err(CompileError::SemanticError(ValidationError::InvalidFooter(
+            return Err(CompileError::Semantic(ValidationError::InvalidFooter(
                 format!("{}: {}", footer.key, footer.value),
             )));
         }
@@ -101,19 +99,16 @@ impl SemanticAnalyzer {
         let has_breaking_header = ast.header.breaking;
 
         if has_breaking_header != has_breaking_footer {
-            return Err(CompileError::SemanticError(
+            return Err(CompileError::Semantic(
                 ValidationError::BreakingChangeMismatch,
             ));
         }
 
-        if has_breaking_header {
-            if let Some(footer) = breaking_footer {
-                if footer.value.trim().is_empty() {
-                    return Err(CompileError::SemanticError(
-                        ValidationError::EmptyBreakingChange,
-                    ));
-                }
-            }
+        if has_breaking_header
+            && let Some(footer) = breaking_footer
+            && footer.value.trim().is_empty()
+        {
+            return Err(CompileError::Semantic(ValidationError::EmptyBreakingChange));
         }
 
         Ok(())
@@ -125,7 +120,7 @@ impl SemanticAnalyzer {
 
     fn validate_issue_reference(value: &str) -> Result<(), CompileError> {
         if !value.contains('#') {
-            return Err(CompileError::SemanticError(
+            return Err(CompileError::Semantic(
                 ValidationError::InvalidIssueReference(value.to_string()),
             ));
         }

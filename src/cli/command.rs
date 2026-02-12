@@ -23,15 +23,15 @@ pub fn parse(args: &[String]) -> Command {
             }
             "-m" | "--message" => {
                 // Check if next arg exists and isn't another flag
-                if let Some(next) = iter.next() {
-                    if !next.starts_with('-') {
-                        return Command::Message(next.clone());
-                    }
+                if let Some(next) = iter.next()
+                    && !next.starts_with('-')
+                {
+                    return Command::Message(next.clone());
                 }
                 // No message provided, open editor
                 return Command::Editor;
             }
-            _ => {} // Continue
+            _ => {}
         }
     }
 

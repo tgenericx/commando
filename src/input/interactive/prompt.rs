@@ -54,17 +54,17 @@ impl Prompt {
         println!("  Must be lowercase, alphanumeric with hyphens/underscores");
         println!();
 
-        loop {
-            let input = self.ask("Scope")?;
+        let input = self.ask("Scope")?; // Ask once
 
-            if input.is_empty() {
-                return Ok(None);
-            }
+        if input.is_empty() {
+            return Ok(None); // Skip on empty
+        }
 
-            if self.validator.validate_scope(&input) {
-                return Ok(Some(input));
-            }
+        if self.validator.validate_scope(&input) {
+            Ok(Some(input))
+        } else {
             println!("  ✗ Invalid scope. Must be lowercase alphanumeric.\n");
+            self.scope() // Recursive retry on invalid only
         }
     }
 

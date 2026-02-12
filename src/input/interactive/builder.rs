@@ -1,36 +1,44 @@
 #[derive(Debug, Default)]
 pub struct MessageBuilder {
     commit_type: Option<String>,
-    scope: Option<String>,
-    breaking: bool,
+    scope: Option<Option<String>>,
+    breaking: Option<bool>,
     description: Option<String>,
-    body: Option<String>,
+    body: Option<Option<String>>,
     breaking_description: Option<String>,
-    footers: Option<String>,
+    footers: Option<Option<String>>,
 }
 
 impl MessageBuilder {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            commit_type: None,
+            scope: None,
+            breaking: None,
+            description: None,
+            body: None,
+            breaking_description: None,
+            footers: None,
+        }
     }
 
     pub fn commit_type(&self) -> Option<&String> {
         self.commit_type.as_ref()
     }
 
-    pub fn scope(&self) -> Option<&String> {
+    pub fn scope(&self) -> Option<&Option<String>> {
         self.scope.as_ref()
     }
 
     pub fn breaking(&self) -> Option<bool> {
-        Some(self.breaking)
+        self.breaking
     }
 
     pub fn description(&self) -> Option<&String> {
         self.description.as_ref()
     }
 
-    pub fn body(&self) -> Option<&String> {
+    pub fn body(&self) -> Option<&Option<String>> {
         self.body.as_ref()
     }
 
@@ -38,7 +46,7 @@ impl MessageBuilder {
         self.breaking_description.as_ref()
     }
 
-    pub fn footers(&self) -> Option<&String> {
+    pub fn footers(&self) -> Option<&Option<String>> {
         self.footers.as_ref()
     }
 
@@ -48,12 +56,12 @@ impl MessageBuilder {
     }
 
     pub fn with_scope(&mut self, scope: Option<String>) -> &mut Self {
-        self.scope = scope;
+        self.scope = Some(scope);
         self
     }
 
     pub fn with_breaking(&mut self, breaking: bool) -> &mut Self {
-        self.breaking = breaking;
+        self.breaking = Some(breaking);
         self
     }
 
@@ -63,7 +71,7 @@ impl MessageBuilder {
     }
 
     pub fn with_body(&mut self, body: Option<String>) -> &mut Self {
-        self.body = body;
+        self.body = Some(body);
         self
     }
 
@@ -73,58 +81,51 @@ impl MessageBuilder {
     }
 
     pub fn with_footers(&mut self, footers: Option<String>) -> &mut Self {
-        self.footers = footers;
+        self.footers = Some(footers);
         self
     }
 
     pub fn build(&self) -> Result<String, crate::input::InputError> {
         let mut message = String::new();
 
-        // Type (required)
         let ty = self
             .commit_type
             .as_ref()
-            .ok_or_else(|| crate::input::InputError::Empty)?;
+            .ok_or(crate::input::InputError::Empty)?;
         message.push_str(ty);
 
-        // Scope (optional)
-        if let Some(scope) = &self.scope {
+        if let Some(Some(scope)) = self.scope.as_ref() {
             message.push('(');
             message.push_str(scope);
             message.push(')');
         }
 
-        // Breaking indicator
-        if self.breaking {
+        if self.breaking == Some(true) {
             message.push('!');
         }
 
-        // Description (required)
         let desc = self
             .description
             .as_ref()
-            .ok_or_else(|| crate::input::InputError::Empty)?;
+            .ok_or(crate::input::InputError::Empty)?;
         message.push_str(": ");
         message.push_str(desc);
 
-        // Body (optional)
-        if let Some(body) = &self.body {
+        if let Some(Some(body)) = self.body.as_ref() {
             message.push_str("\n\n");
             message.push_str(body);
         }
 
-        // Breaking change footer
-        if self.breaking {
+        if self.breaking == Some(true) {
             let breaking_desc = self
                 .breaking_description
                 .as_ref()
-                .ok_or_else(|| crate::input::InputError::Empty)?;
+                .ok_or(crate::input::InputError::Empty)?;
             message.push_str("\n\nBREAKING CHANGE: ");
             message.push_str(breaking_desc);
         }
 
-        // Additional footers
-        if let Some(footers) = &self.footers {
+        if let Some(Some(footers)) = self.footers.as_ref() {
             message.push_str("\n\n");
             message.push_str(footers);
         }

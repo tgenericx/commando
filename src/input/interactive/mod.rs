@@ -26,7 +26,6 @@ impl InteractiveMode {
         println!("\n=== Interactive Commit Builder ===\n");
 
         loop {
-            // Build message step by step
             if self.builder.commit_type().is_none() {
                 let ty = self.prompt.commit_type()?;
                 self.builder.with_type(ty);
@@ -68,9 +67,9 @@ impl InteractiveMode {
             if self.builder.footers().is_none() {
                 let footers = self.prompt.footers()?;
                 self.builder.with_footers(footers);
+                continue;
             }
 
-            // All fields collected, show preview
             let message = self.builder.build()?;
 
             println!("\n{}", "=".repeat(50));
@@ -120,14 +119,20 @@ impl InteractiveMode {
         );
         println!(
             "  [2] Scope (current: {})",
-            self.builder.scope().map(|s| s.as_str()).unwrap_or("none")
+            self.builder
+                .scope()
+                .and_then(|opt| opt.as_ref())
+                .map(|s| s.as_str())
+                .unwrap_or("none")
         );
         println!(
             "  [3] Breaking change (current: {})",
             if self.builder.breaking() == Some(true) {
                 "yes"
-            } else {
+            } else if self.builder.breaking() == Some(false) {
                 "no"
+            } else {
+                "not set"
             }
         );
         println!(

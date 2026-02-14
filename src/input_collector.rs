@@ -1,4 +1,4 @@
-use crate::domain::{CommitMessage, CommitType, ValidationError};
+use crate::domain::{CommitMessage, CommitType, DomainError};
 use std::io::{self, Write};
 
 /// Interactive input collector for commit messages
@@ -18,7 +18,7 @@ pub struct CommitData {
 }
 
 impl CommitData {
-    pub fn to_commit_message(&self) -> Result<CommitMessage, ValidationError> {
+    pub fn to_commit_message(&self) -> Result<CommitMessage, DomainError> {
         CommitMessage::new(
             self.commit_type,
             self.scope.clone(),
@@ -128,7 +128,7 @@ impl InputCollector {
                     println!();
                     return Ok(commit_type);
                 }
-                Err(ValidationError::InvalidCommitType(_)) => {
+                Err(DomainError::InvalidCommitType(_)) => {
                     println!(
                         "Error: '{}' is not a valid type. Please choose from the list above.",
                         input

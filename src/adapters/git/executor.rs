@@ -5,7 +5,7 @@ use std::process::Command;
 use super::error::GitError;
 use crate::ports::{CommitExecutor, CommitResult, DryRunner};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct GitCommitExecutor;
 
 impl CommitExecutor for GitCommitExecutor {
@@ -70,7 +70,7 @@ mod tests {
 
     #[test]
     fn git_executor_can_be_created() {
-        let _executor = GitCommitExecutor::new();
+        let _executor = GitCommitExecutor::default();
     }
 
     #[test]

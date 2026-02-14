@@ -6,6 +6,5 @@ mod error;
 mod executor;
 mod staging;
 
-pub use error::{GitError, Result};
 pub use executor::GitCommitExecutor;
 pub use staging::GitStagingChecker;

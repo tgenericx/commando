@@ -1,3 +1,5 @@
+mod error;
+pub use error::InteractiveError;
 /// Interactive input source — collects commit fields one at a time via prompts.
 ///
 /// Implements InputSource<Output = StructuredInput>. Each section module
@@ -5,7 +7,6 @@
 /// so this works with TerminalUI in production and MockUi in tests.
 mod sections;
 
-use crate::domain::DomainError;
 use crate::ports::input::{InputSource, StructuredInput};
 use crate::ports::ui::Ui;
 
@@ -21,9 +22,9 @@ impl<U: Ui> InteractiveSource<U> {
 
 impl<U: Ui> InputSource for InteractiveSource<U> {
     type Output = StructuredInput;
-    type Error = DomainError;
+    type Error = InteractiveError;
 
-    fn collect(&self) -> Result<StructuredInput, DomainError> {
+    fn collect(&self) -> Result<StructuredInput, InteractiveError> {
         self.ui.println("\n=== commando ===\n");
 
         let commit_type = sections::header::collect_type(&self.ui)?;

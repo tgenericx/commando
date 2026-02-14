@@ -3,10 +3,11 @@
 /// Each function validates its field immediately at prompt time.
 /// A bad value is rejected before the user moves on — no post-hoc
 /// validation needed for these fields.
-use crate::domain::{CommitMessage, CommitType, DomainError};
+use crate::domain::{CommitMessage, CommitType};
+use crate::input::interactive::InteractiveError;
 use crate::ports::ui::Ui;
 
-pub fn collect_type<U: Ui>(ui: &U) -> Result<CommitType, DomainError> {
+pub fn collect_type<U: Ui>(ui: &U) -> Result<CommitType, InteractiveError> {
     ui.println("1. Commit type:");
     ui.println("   feat      — new feature");
     ui.println("   fix       — bug fix");
@@ -22,9 +23,7 @@ pub fn collect_type<U: Ui>(ui: &U) -> Result<CommitType, DomainError> {
     ui.println("");
 
     loop {
-        let input = ui
-            .prompt("Type: ")
-            .map_err(|e| DomainError::InvalidCommitType(e.to_string()))?;
+        let input = ui.prompt("Type: ").map_err(InteractiveError::Ui)?;
 
         match CommitType::from_str(&input) {
             Ok(ct) => {
@@ -41,15 +40,13 @@ pub fn collect_type<U: Ui>(ui: &U) -> Result<CommitType, DomainError> {
     }
 }
 
-pub fn collect_scope<U: Ui>(ui: &U) -> Result<Option<String>, DomainError> {
+pub fn collect_scope<U: Ui>(ui: &U) -> Result<Option<String>, InteractiveError> {
     ui.println("2. Scope (optional — press Enter to skip):");
     ui.println("   e.g. api, parser, auth-service");
     ui.println("");
 
     loop {
-        let input = ui
-            .prompt("Scope: ")
-            .map_err(|e| DomainError::InvalidScope(e.to_string()))?;
+        let input = ui.prompt("Scope: ").map_err(InteractiveError::Ui)?;
 
         if input.is_empty() {
             ui.println("");
@@ -68,14 +65,12 @@ pub fn collect_scope<U: Ui>(ui: &U) -> Result<Option<String>, DomainError> {
     }
 }
 
-pub fn collect_description<U: Ui>(ui: &U) -> Result<String, DomainError> {
+pub fn collect_description<U: Ui>(ui: &U) -> Result<String, InteractiveError> {
     ui.println("3. Description (max 72 characters):");
     ui.println("");
 
     loop {
-        let input = ui
-            .prompt("Description: ")
-            .map_err(|e| DomainError::EmptyDescription(e.to_string()))?;
+        let input = ui.prompt("Description: ").map_err(InteractiveError::Ui)?;
 
         if input.is_empty() {
             ui.println("  ✗ Description cannot be empty.");

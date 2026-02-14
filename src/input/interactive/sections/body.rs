@@ -3,10 +3,10 @@
 /// Asks first before launching into multiline collection.
 /// Blank initial response skips the section entirely.
 use crate::domain::DomainError;
+use crate::input::interactive::InteractiveError;
 use crate::ports::ui::Ui;
-use std::io;
 
-pub fn collect<U: Ui>(ui: &U) -> Result<Option<String>, DomainError> {
+pub fn collect<U: Ui>(ui: &U) -> Result<Option<String>, InteractiveError> {
     let wants_body = ui
         .confirm("4. Add a body with more detail?")
         .map_err(|_e| DomainError::EmptyBody)?;
@@ -23,18 +23,11 @@ pub fn collect<U: Ui>(ui: &U) -> Result<Option<String>, DomainError> {
     let mut lines: Vec<String> = Vec::new();
 
     loop {
-        let mut line = String::new();
-        match io::stdin().read_line(&mut line) {
-            Ok(0) => break, // Ctrl+D / EOF
-            Ok(_) => {
-                let trimmed = line.trim_end_matches('\n').trim_end_matches('\r');
-                if trimmed.is_empty() && !lines.is_empty() {
-                    break; // blank line ends input
-                }
-                lines.push(trimmed.to_string());
-            }
-            Err(_e) => return Err(DomainError::EmptyBody), // io error — treat as skip
+        let input = ui.prompt("")?;
+        if input.is_empty() && !lines.is_empty() {
+            break;
         }
+        lines.push(input);
     }
 
     let body = lines.join("\n").trim().to_string();

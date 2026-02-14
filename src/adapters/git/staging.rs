@@ -12,12 +12,12 @@ impl StagingChecker for GitStagingChecker {
     type Error = GitError;
 
     fn has_staged_changes(&self) -> Result<bool, Self::Error> {
-        let is_repo = Command::new("git")
+        let is_repo_output = Command::new("git")
             .args(["rev-parse", "--is-inside-work-tree"])
             .output()
-            .map_err(|_| GitError::NotAGitRepository)?;
+            .map_err(|e| GitError::ExecutionFailed(format!("Failed to run git: {}", e)))?;
 
-        if !is_repo.status.success() {
+        if !is_repo_output.status.success() {
             return Err(GitError::NotAGitRepository);
         }
 

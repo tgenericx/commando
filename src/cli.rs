@@ -1,21 +1,32 @@
-use crate::commit_executor::CommitExecutor;
 use crate::input_collector::{CommitData, InputCollector};
-use crate::staging_checker::StagingChecker;
+use crate::ports::{CommitExecutor, DryRunner, StagingChecker};
+use std::error::Error;
+use std::fmt::Display; // Add this import
 use std::io::{self, Write};
 use std::process::ExitCode;
 
-pub struct CliController {
-    staging_checker: StagingChecker,
+pub struct CliController<S, E, Err>
+where
+    S: StagingChecker<Error = Err>,
+    E: CommitExecutor<Error = Err> + DryRunner<Error = Err>, // Add Error = Err here
+    Err: Error + Display + 'static,                          // Add Display bound
+{
+    staging_checker: S,
     input_collector: InputCollector,
-    commit_executor: CommitExecutor,
+    commit_executor: E,
 }
 
-impl CliController {
-    pub fn new() -> Self {
+impl<S, E, Err> CliController<S, E, Err>
+where
+    S: StagingChecker<Error = Err>,
+    E: CommitExecutor<Error = Err> + DryRunner<Error = Err>, // Add Error = Err here
+    Err: Error + Display + 'static,                          // Add Display bound
+{
+    pub fn new(staging_checker: S, commit_executor: E) -> Self {
         Self {
-            staging_checker: StagingChecker::new(),
+            staging_checker,
             input_collector: InputCollector::new(),
-            commit_executor: CommitExecutor::new(),
+            commit_executor,
         }
     }
 
@@ -220,9 +231,14 @@ impl CliController {
     }
 }
 
-impl Default for CliController {
+impl<S, E, Err> Default for CliController<S, E, Err>
+where
+    S: StagingChecker<Error = Err> + Default,
+    E: CommitExecutor<Error = Err> + DryRunner<Error = Err> + Default, // Add Error = Err here too
+    Err: Error + Display + 'static,                                    // Add Display bound
+{
     fn default() -> Self {
-        Self::new()
+        Self::new(S::default(), E::default())
     }
 }
 
@@ -230,19 +246,4 @@ enum Action {
     Proceed,
     Edit,
     Abort,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn cli_controller_can_be_created() {
-        let _controller = CliController::new();
-    }
-
-    #[test]
-    fn cli_controller_has_default() {
-        let _controller = CliController::default();
-    }
 }

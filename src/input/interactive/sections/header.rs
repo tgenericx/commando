@@ -75,7 +75,7 @@ pub fn collect_description<U: Ui>(ui: &U) -> Result<String, DomainError> {
     loop {
         let input = ui
             .prompt("Description: ")
-            .map_err(|_| DomainError::EmptyDescription)?;
+            .map_err(|e| DomainError::EmptyDescription(e.to_string()))?;
 
         if input.is_empty() {
             ui.println("  ✗ Description cannot be empty.");

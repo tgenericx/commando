@@ -5,7 +5,7 @@ use std::process::Command;
 use super::error::GitError;
 use crate::ports::StagingChecker;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct GitStagingChecker;
 
 impl StagingChecker for GitStagingChecker {
@@ -41,7 +41,7 @@ mod tests {
 
     #[test]
     fn git_staging_checker_can_be_created() {
-        let _checker = GitStagingChecker::new();
+        let _checker = GitStagingChecker::default();
     }
 
     #[test]
@@ -51,7 +51,7 @@ mod tests {
 
     #[test]
     fn has_staged_changes_returns_result() {
-        let checker = GitStagingChecker::new();
+        let checker = GitStagingChecker::default();
         // This will succeed or fail depending on whether we're in a git repo
         let _result = checker.has_staged_changes();
     }

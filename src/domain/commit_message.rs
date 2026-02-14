@@ -224,10 +224,7 @@ mod tests {
     fn description_too_long_fails() {
         let long_desc = "a".repeat(73);
         let commit = CommitMessage::new(CommitType::Feat, None, long_desc, None, None);
-        assert!(matches!(
-            commit,
-            Err(DomainError::DescriptionTooLong(_))
-        ));
+        assert!(matches!(commit, Err(DomainError::DescriptionTooLong(_))));
     }
 
     #[test]

@@ -2,14 +2,13 @@
 ///
 /// Asks first before launching into multiline collection.
 /// Blank initial response skips the section entirely.
-use crate::domain::DomainError;
 use crate::input::interactive::InteractiveError;
 use crate::ports::ui::Ui;
 
 pub fn collect<U: Ui>(ui: &U) -> Result<Option<String>, InteractiveError> {
     let wants_body = ui
         .confirm("4. Add a body with more detail?")
-        .map_err(|_e| DomainError::EmptyBody)?;
+        .map_err(InteractiveError::Ui)?;
 
     if !wants_body {
         ui.println("");

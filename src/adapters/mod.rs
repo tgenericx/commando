@@ -1,9 +1,10 @@
-//! Adapters module - Concrete implementations of ports
+//! Adapters — concrete implementations of ports.
 //!
-//! This module contains the actual implementations of the ports defined in the ports module.
-//! Currently, we have Git-based implementations for all ports.
-
+//! All imports in this crate should go through these re-exports.
+//! Nothing outside adapters/ should import adapter internals directly.
 mod git;
+pub mod ui;
 
 pub use git::GitCommitExecutor;
 pub use git::GitStagingChecker;
+pub use ui::TerminalUI;

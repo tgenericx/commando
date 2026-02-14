@@ -37,6 +37,14 @@ impl CommitType {
         }
     }
 
+    /// Returns all valid commit types as a slice of strings
+    pub fn all_as_str() -> &'static [&'static str] {
+        &[
+            "feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore",
+            "revert",
+        ]
+    }
+
     /// Parse a commit type from a string
     pub fn from_str(s: &str) -> Result<Self, ValidationError> {
         match s.to_lowercase().as_str() {
@@ -108,5 +116,18 @@ mod tests {
     fn commit_type_display() {
         assert_eq!(format!("{}", CommitType::Feat), "feat");
         assert_eq!(format!("{}", CommitType::Fix), "fix");
+    }
+
+    #[test]
+    fn commit_type_all_as_str() {
+        let all = CommitType::all_as_str();
+        assert_eq!(all.len(), 11);
+        assert_eq!(
+            all,
+            &[
+                "feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore",
+                "revert"
+            ]
+        );
     }
 }

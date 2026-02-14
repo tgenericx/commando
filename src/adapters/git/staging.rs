@@ -2,40 +2,33 @@
 
 use std::process::Command;
 
-use crate::domain::error::DomainError;
+use super::error::GitError;
 use crate::ports::StagingChecker;
 
 #[derive(Debug, Default)]
 pub struct GitStagingChecker;
 
-impl GitStagingChecker {
-    pub fn new() -> Self {
-        Self
-    }
+impl StagingChecker for GitStagingChecker {
+    type Error = GitError;
 
-    fn is_git_repo(&self) -> bool {
-        Command::new("git")
+    fn has_staged_changes(&self) -> Result<bool, Self::Error> {
+        let is_repo = Command::new("git")
             .args(["rev-parse", "--is-inside-work-tree"])
             .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false)
-    }
-}
+            .map_err(|_| GitError::NotAGitRepository)?;
 
-impl StagingChecker for GitStagingChecker {
-    fn has_staged_changes(&self) -> Result<bool, DomainError> {
-        if !self.is_git_repo() {
-            return Err(DomainError::Infrastructure("Not inside a git repository".to_string()));
+        if !is_repo.status.success() {
+            return Err(GitError::NotAGitRepository);
         }
 
         let output = Command::new("git")
             .args(["diff", "--cached", "--name-only"])
             .output()
-            .map_err(|e| DomainError::Infrastructure(format!("Failed to execute git command: {}", e)))?;
+            .map_err(|e| GitError::ExecutionFailed(e.to_string()))?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(DomainError::Infrastructure(format!("Git command failed: {}", stderr.trim())));
+            return Err(GitError::ExecutionFailed(stderr.trim().to_string()));
         }
 
         Ok(!output.stdout.is_empty())

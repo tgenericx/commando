@@ -4,4 +4,4 @@ mod error;
 
 pub use commit_message::CommitMessage;
 pub use commit_type::CommitType;
-pub use error::ValidationError;
+pub use error::DomainError;

@@ -2,7 +2,7 @@
 ///
 /// Represents the type of a conventional commit.
 /// All validation happens at construction time, making invalid states unrepresentable.
-use crate::domain::error::ValidationError;
+use crate::domain::error::DomainError;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CommitType {
@@ -46,7 +46,7 @@ impl CommitType {
     }
 
     /// Parse a commit type from a string
-    pub fn from_str(s: &str) -> Result<Self, ValidationError> {
+    pub fn from_str(s: &str) -> Result<Self, DomainError> {
         match s.to_lowercase().as_str() {
             "feat" => Ok(CommitType::Feat),
             "fix" => Ok(CommitType::Fix),
@@ -59,7 +59,7 @@ impl CommitType {
             "ci" => Ok(CommitType::Ci),
             "chore" => Ok(CommitType::Chore),
             "revert" => Ok(CommitType::Revert),
-            _ => Err(ValidationError::InvalidCommitType(s.to_string())),
+            _ => Err(DomainError::InvalidCommitType(s.to_string())),
         }
     }
 }
@@ -97,11 +97,11 @@ mod tests {
     fn commit_type_from_str_invalid() {
         assert!(matches!(
             CommitType::from_str("invalid"),
-            Err(ValidationError::InvalidCommitType(_))
+            Err(DomainError::InvalidCommitType(_))
         ));
         assert!(matches!(
             CommitType::from_str("feature"),
-            Err(ValidationError::InvalidCommitType(_))
+            Err(DomainError::InvalidCommitType(_))
         ));
     }
 

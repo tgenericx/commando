@@ -3,7 +3,7 @@
 /// Represents a structured commit message following conventional commits format.
 /// All validation happens at construction time, making invalid states unrepresentable.
 use crate::domain::commit_type::CommitType;
-use crate::domain::error::ValidationError;
+use crate::domain::error::DomainError;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CommitMessage {
@@ -25,14 +25,14 @@ impl CommitMessage {
     /// * `breaking_change` - Optional breaking change description
     ///
     /// # Errors
-    /// Returns `ValidationError` if any validation rules are violated
+    /// Returns `DomainError` if any validation rules are violated
     pub fn new(
         commit_type: CommitType,
         scope: Option<String>,
         description: String,
         body: Option<String>,
         breaking_change: Option<String>,
-    ) -> Result<Self, ValidationError> {
+    ) -> Result<Self, DomainError> {
         // Validate description
         Self::validate_description(&description)?;
 
@@ -45,14 +45,14 @@ impl CommitMessage {
         if let Some(ref b) = body
             && b.trim().is_empty()
         {
-            return Err(ValidationError::EmptyBody);
+            return Err(DomainError::EmptyBody);
         }
 
         // Validate breaking change if provided
         if let Some(ref bc) = breaking_change
             && bc.trim().is_empty()
         {
-            return Err(ValidationError::EmptyBreakingChange);
+            return Err(DomainError::EmptyBreakingChange);
         }
 
         Ok(CommitMessage {
@@ -64,25 +64,25 @@ impl CommitMessage {
         })
     }
 
-    fn validate_description(description: &str) -> Result<(), ValidationError> {
+    fn validate_description(description: &str) -> Result<(), DomainError> {
         let trimmed = description.trim();
 
         if trimmed.is_empty() {
-            return Err(ValidationError::EmptyDescription);
+            return Err(DomainError::EmptyDescription);
         }
 
         if trimmed.len() > 72 {
-            return Err(ValidationError::DescriptionTooLong(trimmed.len()));
+            return Err(DomainError::DescriptionTooLong(trimmed.len()));
         }
 
         Ok(())
     }
 
-    pub fn validate_scope(scope: &str) -> Result<(), ValidationError> {
+    pub fn validate_scope(scope: &str) -> Result<(), DomainError> {
         let trimmed = scope.trim();
 
         if trimmed.is_empty() {
-            return Err(ValidationError::InvalidScope(scope.to_string()));
+            return Err(DomainError::InvalidScope(scope.to_string()));
         }
 
         // Scope should be alphanumeric with hyphens and underscores
@@ -90,7 +90,7 @@ impl CommitMessage {
             .chars()
             .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
         {
-            return Err(ValidationError::InvalidScope(scope.to_string()));
+            return Err(DomainError::InvalidScope(scope.to_string()));
         }
 
         Ok(())
@@ -164,7 +164,7 @@ impl std::fmt::Display for CommitMessage {
 mod tests {
     use super::*;
     use crate::domain::commit_type::CommitType;
-    use crate::domain::error::ValidationError;
+    use crate::domain::error::DomainError;
 
     #[test]
     fn valid_minimal_commit() {
@@ -217,7 +217,7 @@ mod tests {
     #[test]
     fn empty_description_fails() {
         let commit = CommitMessage::new(CommitType::Feat, None, "".to_string(), None, None);
-        assert!(matches!(commit, Err(ValidationError::EmptyDescription)));
+        assert!(matches!(commit, Err(DomainError::EmptyDescription)));
     }
 
     #[test]
@@ -226,7 +226,7 @@ mod tests {
         let commit = CommitMessage::new(CommitType::Feat, None, long_desc, None, None);
         assert!(matches!(
             commit,
-            Err(ValidationError::DescriptionTooLong(_))
+            Err(DomainError::DescriptionTooLong(_))
         ));
     }
 
@@ -239,7 +239,7 @@ mod tests {
             None,
             None,
         );
-        assert!(matches!(commit, Err(ValidationError::InvalidScope(_))));
+        assert!(matches!(commit, Err(DomainError::InvalidScope(_))));
     }
 
     #[test]
@@ -251,7 +251,7 @@ mod tests {
             Some("   ".to_string()),
             None,
         );
-        assert!(matches!(commit, Err(ValidationError::EmptyBody)));
+        assert!(matches!(commit, Err(DomainError::EmptyBody)));
     }
 
     #[test]
@@ -263,7 +263,7 @@ mod tests {
             None,
             Some("".to_string()),
         );
-        assert!(matches!(commit, Err(ValidationError::EmptyBreakingChange)));
+        assert!(matches!(commit, Err(DomainError::EmptyBreakingChange)));
     }
 
     #[test]

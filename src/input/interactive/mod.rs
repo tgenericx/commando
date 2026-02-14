@@ -101,29 +101,6 @@ mod tests {
     }
 
     #[test]
-    fn collects_full_commit_with_scope_and_breaking() {
-        let ui = MockUi::new(vec![
-            "feat",             // type
-            "auth",             // scope
-            "migrate to OAuth", // description
-            "y",                // wants body?
-            // body is collected via stdin directly so MockUi can't feed it here
-            // — body collection uses io::stdin; test the section in isolation
-            "y",                      // breaking change?
-            "Old tokens invalidated", // breaking change description
-            "closes #88",             // refs
-        ]);
-        let source = InteractiveSource::new(ui);
-        // body section reads stdin directly so we skip body in this test
-        // by having "y" trigger the body prompt then EOF closes it — acceptable
-        // for now; body section will get its own targeted test.
-        let result = source.collect();
-        // We only assert it doesn't panic and returns something
-        // Full assertion once body is refactored to accept Ui for line reading
-        assert!(result.is_ok() || result.is_err()); // placeholder
-    }
-
-    #[test]
     fn rejects_invalid_commit_type_then_accepts_valid() {
         // First response is invalid, second is valid
         let ui = MockUi::new(vec![

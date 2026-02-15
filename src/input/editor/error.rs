@@ -3,25 +3,25 @@ use crate::domain::DomainError;
 
 #[derive(Debug)]
 pub enum EditorError {
-    /// Could not write the template to a temp file.
+    /// Could not create or write the temp file.
     TempFile(String),
 
     /// Could not resolve or spawn the editor process.
     SpawnFailed { editor: String, reason: String },
 
-    /// Editor exited with a non-zero status code.
+    /// Editor process exited with a non-zero status code.
     EditorFailed(String),
-
-    /// File was saved but contained no content after stripping comments.
-    EmptyMessage,
 
     /// Could not read the file after the editor closed.
     ReadFailed(String),
 
+    /// User explicitly aborted (chose not to edit again).
+    Aborted,
+
     /// The content compiled but failed domain validation.
     Domain(DomainError),
 
-    /// The content failed to compile (structural error).
+    /// The content failed to compile (structural / syntax error).
     Compile(CompileError),
 }
 
@@ -35,10 +35,8 @@ impl std::fmt::Display for EditorError {
             EditorError::EditorFailed(editor) => {
                 write!(f, "Editor '{}' exited with an error", editor)
             }
-            EditorError::EmptyMessage => {
-                write!(f, "Commit message is empty (all lines were comments)")
-            }
             EditorError::ReadFailed(e) => write!(f, "Failed to read temp file: {}", e),
+            EditorError::Aborted => write!(f, "Commit aborted"),
             EditorError::Domain(e) => write!(f, "{}", e),
             EditorError::Compile(e) => write!(f, "{}", e),
         }

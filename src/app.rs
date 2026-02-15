@@ -199,6 +199,7 @@ mod tests {
             "add feature".into(),
             None,
             None,
+            vec![],
         )
         .unwrap()))
     }

@@ -1,8 +1,8 @@
-# Grit
+# Cargo
 
 > A modern, interactive Git commit message tool written in Rust
 
-Grit is a command-line tool that helps developers write better Git commit messages by providing an interactive interface with support for Conventional Commits format. Built with Rust for performance and reliability.
+Cargo is a command-line tool that helps developers write better Git commit messages by providing an interactive interface with support for Conventional Commits format. Built with Rust for performance and reliability.
 
 ## Features
 
@@ -75,7 +75,7 @@ commando/
 
 ### Conventional Commits
 
-Grit follows the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+Cargo follows the [Conventional Commits](https://www.conventionalcommits.org/) specification:
 
 ```
 <type>(<scope>): <subject>
@@ -106,7 +106,7 @@ Grit follows the [Conventional Commits](https://www.conventionalcommits.org/) sp
 
 ## Architecture Highlights
 
-Grit uses **Hexagonal Architecture** (Ports & Adapters):
+Cargo uses **Hexagonal Architecture** (Ports & Adapters):
 
 ```mermaid
 graph TB

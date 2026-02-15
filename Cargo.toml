@@ -1,6 +1,6 @@
 [package]
 name = "commando"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2024"
 authors = ["Hammed Anuoluwapo Pelumi <stationphast@gmail.com>"]
 description = "An interactive CLI tool to help you write conventional commit messages with ease."

@@ -1,88 +1,175 @@
-name: ✨ Feature Request
-description: Propose a new capability or behavior for the system.
-title: "[FEATURE] <short capability name>"
-labels: ["✨ feature", "🚦 status: design"]
+name: Feature Request
+description: Suggest an idea or enhancement for this project
+title: "[Feature] "
+labels: ["enhancement"]
+assignees: []
+
 body:
   - type: markdown
     attributes:
       value: |
-        This project follows **ground-up, domain-first development**.
-        Features are accepted only when their domain impact is clearly understood.
+        Thanks for taking the time to suggest a new feature! Please fill out the sections below to help us understand your request.
 
   - type: textarea
-    id: motivation
+    id: problem
     attributes:
-      label: Motivation
-      description: Why is this feature needed? What problem does it solve?
+      label: Problem Statement
+      description: What problem does this feature solve? Is your feature request related to a specific pain point?
+      placeholder: |
+        Example: "I'm always frustrated when... because..."
+        or "Currently, there's no way to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see implemented. Be as detailed as possible.
+      placeholder: |
+        Example: "I'd like to have a feature that allows..."
+        Include:
+        - What the feature should do
+        - How users would interact with it
+        - Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical-approach
+    attributes:
+      label: Technical Approach (Optional)
+      description: If you have technical suggestions or implementation ideas, share them here.
       placeholder: |
         Example:
-        Allow CLI tools to authenticate without embedding browser flows.
+        - Use PathBuf for file management
+        - Implement a cleanup function
+        - Add error handling with recovery flow
     validations:
-      required: true
+      required: false
 
   - type: textarea
-    id: capability
+    id: benefits
     attributes:
-      label: Capability Description
-      description: Describe the new behavior in domain terms (not UI or implementation).
+      label: Benefits
+      description: What are the benefits of implementing this feature?
       placeholder: |
-        Example:
-        The system shall support OAuth 2.0 Device Authorization Grant.
-    validations:
-      required: true
-
-  - type: textarea
-    id: domain-impact
-    attributes:
-      label: Domain Impact
-      description: Which domain concepts are affected or introduced?
-      placeholder: |
-        - Client
-        - DeviceAuthorization
-        - Token
-    validations:
-      required: true
-
-  - type: textarea
-    id: invariants
-    attributes:
-      label: New or Affected Invariants
-      description: What rules must always hold after this feature is added?
-      placeholder: |
-        - Device codes must expire
-        - A device authorization can only be approved once
-    validations:
-      required: true
-
-  - type: textarea
-    id: out-of-scope
-    attributes:
-      label: Explicitly Out of Scope
-      description: What this feature will NOT handle (to prevent scope creep).
-      placeholder: |
-        - No multi-user support
-        - No UI customization
+        - Improved user experience
+        - Better performance
+        - Reduced complexity
+        - Solves common use case
     validations:
       required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives Considered
-      description: Other ways to solve the same problem and why they were rejected.
+      label: Alternative Solutions
+      description: Have you considered any alternative solutions or workarounds?
       placeholder: |
-        - Reusing authorization code flow in CLI (poor UX)
-        - Hardcoding tokens (security risk)
+        Example:
+        1. Could use approach X, but it has drawback Y
+        2. Workaround exists but is cumbersome
+        3. Other tools handle this by...
     validations:
       required: false
 
   - type: textarea
-    id: success
+    id: use-cases
     attributes:
-      label: Acceptance Criteria
-      description: How will we know this feature is correctly implemented?
+      label: Use Cases
+      description: Provide specific examples of when and how this feature would be used.
       placeholder: |
-        - CLI can obtain tokens without browser
-        - Tests cover failure cases
+        Scenario 1: When a user...
+        Scenario 2: In cases where...
+        Scenario 3: For workflows involving...
+    validations:
+      required: false
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Example/Mock-up
+      description: If applicable, provide code examples, command-line examples, or mockups.
+      placeholder: |
+        ```bash
+        # Example usage:
+        commando --feature-flag option
+        ```
+        
+        Or describe the UI flow:
+        1. User does X
+        2. System shows Y
+        3. Result is Z
+      render: bash
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - "Critical - Blocking my workflow"
+        - "High - Would significantly improve my experience"
+        - "Medium - Nice to have"
+        - "Low - Minor improvement"
     validations:
       required: true
+
+  - type: dropdown
+    id: willingness-to-contribute
+    attributes:
+      label: Willingness to Contribute
+      description: Are you willing to help implement this feature?
+      options:
+        - "Yes, I can submit a PR"
+        - "Yes, with guidance"
+        - "Maybe, depends on complexity"
+        - "No, but happy to test"
+        - "No"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: Impact Areas
+      description: Which areas of the project would this feature affect?
+      options:
+        - label: User Interface/UX
+        - label: Performance
+        - label: Security
+        - label: Documentation
+        - label: API/CLI
+        - label: Configuration
+        - label: Error Handling
+        - label: Testing
+        - label: Dependencies
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or references about the feature request here.
+      placeholder: |
+        - Links to similar features in other projects
+        - Related issues or discussions
+        - Screenshots or diagrams
+        - Research or benchmarks
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Submission Checklist
+      description: Please confirm the following before submitting
+      options:
+        - label: I have searched existing issues to ensure this isn't a duplicate
+          required: true
+        - label: I have provided a clear description of the problem and solution
+          required: true
+        - label: I have considered the impact on existing functionality
+          required: true

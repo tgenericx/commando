@@ -1,5 +1,6 @@
 mod error;
 pub use error::InteractiveError;
+
 /// Interactive input source — collects commit fields one at a time via prompts.
 ///
 /// Implements InputSource<Output = StructuredInput>. Each section module
@@ -25,7 +26,7 @@ impl<U: Ui> InputSource for InteractiveSource<U> {
     type Error = InteractiveError;
 
     fn collect(&self) -> Result<StructuredInput, InteractiveError> {
-        self.ui.println("\n=== commando ===\n");
+        self.ui.println("\n=== grit ===\n");
 
         let commit_type = sections::header::collect_type(&self.ui)?;
         let scope = sections::header::collect_scope(&self.ui)?;
@@ -52,8 +53,6 @@ mod tests {
     use crate::ports::ui::{Ui, UiError};
     use std::cell::RefCell;
 
-    /// MockUi feeds pre-canned responses in order.
-    /// confirm() pops a response and interprets "y" as true.
     struct MockUi {
         responses: RefCell<Vec<String>>,
     }
@@ -87,7 +86,6 @@ mod tests {
 
     #[test]
     fn collects_minimal_commit() {
-        // type, scope (skip), description, body (n), breaking (n), refs (skip)
         let ui = MockUi::new(vec!["feat", "", "add login page", "n", "n", ""]);
         let source = InteractiveSource::new(ui);
         let result = source.collect().unwrap();
@@ -102,15 +100,14 @@ mod tests {
 
     #[test]
     fn rejects_invalid_commit_type_then_accepts_valid() {
-        // First response is invalid, second is valid
         let ui = MockUi::new(vec![
-            "invalid-type",       // rejected
-            "fix",                // accepted
-            "",                   // scope skip
-            "patch null pointer", // description
-            "n",                  // body
-            "n",                  // breaking
-            "",                   // refs
+            "invalid-type",
+            "fix",
+            "",
+            "patch null pointer",
+            "n",
+            "n",
+            "",
         ]);
         let source = InteractiveSource::new(ui);
         let result = source.collect().unwrap();
@@ -132,5 +129,26 @@ mod tests {
         assert_eq!(result.commit_type, CommitType::Docs);
         assert_eq!(result.scope, Some("readme".to_string()));
         assert_eq!(result.refs, Some("#42".to_string()));
+    }
+
+    #[test]
+    fn collects_with_breaking_change() {
+        let ui = MockUi::new(vec![
+            "feat",
+            "auth",
+            "migrate to OAuth",
+            "n",
+            "y",
+            "old tokens are invalidated",
+            "",
+        ]);
+        let source = InteractiveSource::new(ui);
+        let result = source.collect().unwrap();
+        assert_eq!(result.commit_type, CommitType::Feat);
+        assert_eq!(result.scope, Some("auth".to_string()));
+        assert_eq!(
+            result.breaking_change,
+            Some("old tokens are invalidated".to_string())
+        );
     }
 }

@@ -1,8 +1,13 @@
-/// CLI entry point — the composition root.
-///
-/// This is the only file in the codebase that names concrete adapter types.
-/// Everything else depends on port traits. Adding a --tui flag means adding
-/// one branch here and a new adapters/ui/ratatui.rs — nothing else changes.
+//! CLI entry point — the composition root for grit.
+//!
+//! This is the ONLY file in the codebase that names concrete adapter types.
+//! Everything else (AppController, InteractiveSource, sections/) depends
+//! exclusively on port traits.
+//!
+//! Adding --tui flag later = add RatatuiUI in adapters/ui/, swap one line here.
+//! Adding direct input later = add DirectSource in input/direct/, add a branch here.
+//! Nothing else in the codebase changes for either.
+
 use std::process::ExitCode;
 
 use crate::adapters::{GitCommitExecutor, GitStagingChecker, TerminalUI};

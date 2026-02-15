@@ -1,5 +1,5 @@
 [package]
-name = "commando"
+name = "grit"
 version = "0.3.0"
 edition = "2024"
 authors = ["Hammed Anuoluwapo Pelumi <stationphast@gmail.com>"]
@@ -13,5 +13,9 @@ documentation = "https://github.com/tgenericx/commando#readme"
 readme = "README.md"
 keywords = ["git", "commit", "cli", "conventional-commits"]
 categories = ["command-line-utilities", "development-tools"]
+
+[[bin]]
+name = "grit"
+path = "src/main.rs"
 
 [dependencies]

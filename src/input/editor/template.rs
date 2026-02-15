@@ -3,16 +3,16 @@
 /// Comment lines (starting with #) are stripped after the editor closes.
 /// Format follows conventional commits spec.
 pub fn commit_template() -> &'static str {
-    "\
-# grit — conventional commit
-# ─────────────────────────────────────────────────────────────────────────────
+    "\n
+# --- grit — conventional commit ---
+#
 # Format:  type(scope)!: description
 #
 # Types:   feat  fix  docs  style  refactor  perf  test  build  ci  chore  revert
 # Scope:   optional — alphanumeric, hyphens, underscores  e.g. (auth), (api)
 # Breaking: add '!' before ':' AND/OR a 'BREAKING CHANGE: ...' footer
 #
-# ── Examples ──────────────────────────────────────────────────────────────────
+# --- Examples ---
 # feat(auth): add OAuth 2.0 login
 #
 # Migrated from session-based auth to OAuth 2.0.
@@ -20,7 +20,7 @@ pub fn commit_template() -> &'static str {
 #
 # BREAKING CHANGE: session cookies are no longer valid after this release
 # Refs: #142
-# ─────────────────────────────────────────────────────────────────────────────
+# ---
 # Lines starting with '#' are ignored.
 # An empty message aborts the commit.
 "

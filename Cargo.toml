@@ -19,3 +19,5 @@ name = "grit"
 path = "src/main.rs"
 
 [dependencies]
+clap = { version = "4", features = ["derive"] }
+tempfile = "3.25.0"

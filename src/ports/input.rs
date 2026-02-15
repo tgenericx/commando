@@ -1,15 +1,8 @@
 /// Input port — contract between input sources and the application.
-///
-/// InteractiveSource produces StructuredInput (fields already parsed).
-/// Future DirectSource will have its own Output type (raw string).
-/// AppController is generic over InputSource, never tied to one source.
-use crate::domain::{CommitType, DomainError};
+use crate::domain::{CommitMessage, CommitType, DomainError};
 
-/// Output of InteractiveSource.
-///
-/// All fields are already parsed and individually validated at prompt time.
-/// No further lexing or parsing is needed — CommitMessage::try_from() just
-/// runs the final domain invariant checks.
+/// Output of InteractiveSource — fields already parsed and individually validated.
+/// CommitMessage::try_from(StructuredInput) just runs final domain invariant checks.
 #[derive(Debug, Clone)]
 pub struct StructuredInput {
     pub commit_type: CommitType,
@@ -21,10 +14,22 @@ pub struct StructuredInput {
     pub refs: Option<String>,
 }
 
-/// The source-agnostic collection contract.
-///
-/// Each source defines its own Output and Error types.
-/// AppController constrains Output = StructuredInput for the interactive path.
+impl TryFrom<StructuredInput> for CommitMessage {
+    type Error = DomainError;
+
+    fn try_from(s: StructuredInput) -> Result<Self, DomainError> {
+        CommitMessage::new(
+            s.commit_type,
+            s.scope,
+            s.description,
+            s.body,
+            s.breaking_change,
+        )
+    }
+}
+
+/// Low-level collection contract — still used internally by InteractiveSource.
+/// AppController no longer depends on this directly.
 pub trait InputSource {
     type Output;
     type Error: std::fmt::Display;
@@ -32,20 +37,14 @@ pub trait InputSource {
     fn collect(&self) -> Result<Self::Output, Self::Error>;
 }
 
-/// Convenience — lets AppController call CommitMessage::try_from(input)
-/// directly after collection.
-impl TryFrom<StructuredInput> for crate::domain::CommitMessage {
-    type Error = DomainError;
+/// The unified trait AppController depends on after the migration.
+///
+/// Every input mode — editor, direct, interactive — implements this.
+/// resolve() is the single entry point: whatever the mode does internally
+/// (open an editor, read a CLI arg, prompt the user), it produces a
+/// CommitMessage or returns an error. AppController never sees the difference.
+pub trait CommitMessageSource {
+    type Error: std::fmt::Display;
 
-    fn try_from(s: StructuredInput) -> Result<Self, DomainError> {
-        crate::domain::CommitMessage::new(
-            s.commit_type,
-            s.scope,
-            s.description,
-            s.body,
-            s.breaking_change,
-            // s.refs: not yet modelled in CommitMessage.
-            // Add a refs field there when the footer renderer is ready.
-        )
-    }
+    fn resolve(&self) -> Result<CommitMessage, Self::Error>;
 }

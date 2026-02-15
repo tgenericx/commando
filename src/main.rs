@@ -1,6 +1,7 @@
 mod adapters;
 mod app;
 mod cli;
+mod compiler;
 mod domain;
 mod input;
 mod ports;

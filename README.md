@@ -1,164 +1,184 @@
-# Commando
+# Grit
 
-A terminal tool for creating **structured, conventional Git commits**
-through an interactive, safe, and user-friendly workflow.
+> A modern, interactive Git commit message tool written in Rust
 
-Commando guides you step by step, validates your input, lets you preview
-and edit before committing, and guarantees you never create an invalid
-commit message.
+Grit is a command-line tool that helps developers write better Git commit messages by providing an interactive interface with support for Conventional Commits format. Built with Rust for performance and reliability.
 
----
+## Features
 
-## ✨ Features
+- 🎯 **Interactive Mode** - Step-by-step guided commit message creation
+- ✏️ **Editor Mode** - Open your favorite text editor with a pre-filled template
+- ⚡ **Direct Mode** - Quick commits from command line arguments
+- 🎨 **Custom Syntax** - Domain-specific language (DSL) for commit message templates
+- 📝 **Conventional Commits** - Built-in support for the Conventional Commits specification
+- 🔄 **Git Integration** - Seamless integration with Git workflow
+- 🏗️ **Hexagonal Architecture** - Clean, maintainable, and testable codebase
 
-- **Interactive Workflow** – Guided prompts for every commit field  
-- **Preview & Edit** – Review and fix any field before committing  
-- **Type-Safe Domain Model** – Invalid commits are impossible  
-- **Conventional Commits** – Fully compliant with the specification  
-- **Git-Native Execution** – Runs real `git commit` commands  
-- **Zero Dependencies** – Pure Rust, standard library only  
-
----
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
 ```bash
-git clone https://github.com/tgenericx/commando.git
-cd commando
-cargo install --path .
-````
+# Using the install script (Unix-like systems)
+curl -fsSL https://raw.githubusercontent.com/tgenericx/commando/main/install.sh | sh
 
-### Usage
+# Using PowerShell (Windows)
+iwr -useb https://raw.githubusercontent.com/tgenericx/commando/main/install.ps1 | iex
+
+# Building from source
+cargo install commando
+```
+
+### Basic Usage
 
 ```bash
-# Stage your changes
-git add <files>
+# Interactive mode (default)
+grit
 
-# Run Commando
-commando
+# Editor mode
+grit
+
+# Direct mode
+grit -m "feat: add new feature"
+
+# With scope
+grit -m "fix(api): resolve authentication issue"
 ```
 
-Or without installing:
+## Project Structure
+
+```
+grit/
+├── src/
+│   ├── adapters/       # External interfaces (Git, UI)
+│   ├── compiler/       # DSL lexer, parser, and AST
+│   ├── domain/         # Core business logic
+│   ├── input/          # Input collection strategies
+│   ├── ports/          # Interface definitions (traits)
+│   ├── app.rs          # Application orchestration
+│   ├── cli.rs          # CLI argument parsing
+│   └── main.rs         # Entry point
+├── docs/               # Comprehensive documentation
+└── Cargo.toml          # Project configuration
+```
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md) - System design and patterns
+- [Requirements](docs/REQUIREMENTS.md) - Functional and technical requirements
+- [Flow Diagrams](docs/FLOW.md) - Process flows and state machines
+- [DSL Specification](docs/DSL.md) - Domain-specific language reference
+- [Development Guide](docs/DEVELOPMENT.md) - Contributing and development setup
+- [API Reference](docs/API.md) - Module and function documentation
+
+## Key Concepts
+
+### Conventional Commits
+
+Grit follows the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Supported types:**
+- `feat` - A new feature
+- `fix` - A bug fix
+- `docs` - Documentation changes
+- `style` - Code style changes (formatting, semicolons, etc.)
+- `refactor` - Code refactoring
+- `perf` - Performance improvements
+- `test` - Adding or updating tests
+- `build` - Build system changes
+- `ci` - CI configuration changes
+- `chore` - Other changes that don't modify src or test files
+- `revert` - Reverts a previous commit
+
+### Input Modes
+
+1. **Interactive Mode** - Prompts user through each commit message section
+2. **Editor Mode** - Opens configured editor with a template
+3. **Direct Mode** - Accepts complete message from command line
+
+## Architecture Highlights
+
+Grit uses **Hexagonal Architecture** (Ports & Adapters):
+
+```mermaid
+graph TB
+    CLI[CLI Interface]
+    App[Application Core]
+    Domain[Domain Logic]
+    
+    GitPort[Git Port]
+    UIPort[UI Port]
+    InputPort[Input Port]
+    
+    GitAdapter[Git Adapter]
+    TerminalAdapter[Terminal Adapter]
+    InteractiveInput[Interactive Input]
+    EditorInput[Editor Input]
+    DirectInput[Direct Input]
+    
+    CLI --> App
+    App --> Domain
+    App --> GitPort
+    App --> UIPort
+    App --> InputPort
+    
+    GitPort -.implements.- GitAdapter
+    UIPort -.implements.- TerminalAdapter
+    InputPort -.implements.- InteractiveInput
+    InputPort -.implements.- EditorInput
+    InputPort -.implements.- DirectInput
+```
+
+## Development
 
 ```bash
-cargo run
-```
+# Clone the repository
+git clone https://github.com/tgenericx/grit.git
+cd grit
 
----
-
-## 🧭 Example
-
-```text
-Checking for staged changes...
-✓ Staged changes detected
-
-=== Create Commit Message ===
-
-Type: feat
-Scope: auth
-Description: implement OAuth 2.0 authentication
-
-=== Preview ===
-
-feat(auth)!: implement OAuth 2.0 authentication
-
-Choice (y/e/n): y
-
-✓ Commit created successfully!
-SHA: abc1234
-```
-
----
-
-## 📝 Commit Message Format
-
-Commando follows the **Conventional Commits** format:
-
-```text
-<type>[optional scope][!]: <description>
-
-[optional body]
-
-[optional footer(s)]
-```
-
-### Examples
-
-```text
-feat: add user authentication
-fix(parser): handle tokenizer edge case
-feat(api)!: redesign authentication endpoints
-```
-
----
-
-## ✏️ Edit Before Commit
-
-After previewing your commit message, you can:
-
-- **Proceed** with the commit
-- **Edit** any field (type, scope, description, body, breaking change)
-- **Abort** safely without side effects
-
-All valid input is preserved while editing.
-
----
-
-## 🧠 Architecture (High-Level)
-
-Commando uses a clean, layered design:
-
-- **CliController** – Orchestrates the workflow
-- **InputCollector** – Handles interactive input
-- **CommitData** – Mutable intermediate state
-- **CommitMessage** – Immutable, validated domain model
-- **CommitExecutor** – Executes Git commands
-
-📖 Full diagrams and internals:  
-→ [`docs/architecture.md`](docs/architecture.md)
-
----
-
-## 🧪 Development
-
-```bash
+# Build the project
 cargo build
+
+# Run tests
 cargo test
-cargo clippy
-cargo fmt
+
+# Run with logging
+RUST_LOG=debug cargo run
+
+# Install locally
+cargo install --path .
 ```
 
-**Requirements**
+## Contributing
 
-- Rust 1.70+
-- Git
+Contributions are welcome! Please read our [Development Guide](docs/DEVELOPMENT.md) for details on:
 
----
+- Code structure and organization
+- Testing practices
+- Pull request process
+- Code style guidelines
 
-## 🛣 Roadmap
+## License
 
-- Configuration file support
-- Custom commit types
-- Commit linting for CI
-- Git hooks integration
-- TUI interface
+[LICENSE](LICENSE)
 
-📋 Full roadmap:  
-→ [`docs/roadmap.md`](docs/roadmap.md)
+## Credits
 
----
+Built with ❤️ using:
+- [Rust](https://www.rust-lang.org/)
+- [Clap](https://github.com/clap-rs/clap) - Command line argument parsing
 
-## ❓ FAQ
+## Related Projects
 
-**Is Commando required for Git?**  
-No. It’s an optional wrapper around `git commit`.
+- [Commitizen](https://github.com/commitizen/cz-cli) - The original commit message tool
+- [git-cz](https://github.com/streamich/git-cz) - Commitizen adapter
+- [Conventional Commits](https://www.conventionalcommits.org/) - The specification
 
-**Does it work with existing hooks and workflows?**  
-Yes. Commando executes native Git commands.
-
-**Can I skip Commando for quick commits?**  
-Absolutely. Use `git commit` as usual.
-
----

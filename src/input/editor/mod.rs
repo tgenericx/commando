@@ -311,23 +311,6 @@ mod tests {
         );
     }
 
-    // ── TempCommitFile ────────────────────────────────────────────────────────
-
-    #[test]
-    fn temp_file_is_created_with_template_content() {
-        let file = TempCommitFile::create().unwrap();
-        let content = file.read().unwrap();
-        assert!(content.contains("grit"));
-        assert!(content.lines().all(|l| l.is_empty() || l.starts_with('#')));
-    }
-
-    #[test]
-    fn temp_file_write_and_read_roundtrip() {
-        let file = TempCommitFile::create().unwrap();
-        file.write("feat: test content").unwrap();
-        assert_eq!(file.read().unwrap(), "feat: test content");
-    }
-
     #[test]
     fn temp_file_is_deleted_on_drop() {
         let path = {

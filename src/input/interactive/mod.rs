@@ -31,7 +31,7 @@ impl<U: Ui> InputSource for InteractiveSource<U> {
     type Error = InteractiveError;
 
     fn collect(&self) -> Result<StructuredInput, InteractiveError> {
-        self.ui.println("\n=== grit ===\n");
+        self.ui.println("\n=== commando ===\n");
 
         let commit_type = sections::header::collect_type(&self.ui)?;
         let scope = sections::header::collect_scope(&self.ui)?;

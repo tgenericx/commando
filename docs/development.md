@@ -47,8 +47,8 @@ cargo install cargo-readme
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/tgenericx/grit.git
-cd grit
+git clone https://github.com/tgenericx/commando.git
+cd commando
 ```
 
 ### 2. Build the Project

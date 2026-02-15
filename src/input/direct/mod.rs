@@ -9,13 +9,13 @@ use crate::ports::input::CommitMessageSource;
 ///
 /// The string is provided at construction time from the -m CLI argument.
 /// Multi-line messages work naturally: the shell resolves escape sequences
-/// before the string reaches grit, so "\n" in the shell becomes a real
+/// before the string reaches commando, so "\n" in the shell becomes a real
 /// newline in the String. The compiler already handles multiline input.
 ///
 /// Examples (shell):
-///   grit -m "feat: add login"
-///   grit -m $'feat(auth): add OAuth\n\nMigrated from sessions.'
-///   grit -m "feat(auth): add OAuth
+///   commando -m "feat: add login"
+///   commando -m $'feat(auth): add OAuth\n\nMigrated from sessions.'
+///   commando -m "feat(auth): add OAuth
 ///
 /// Migrated from sessions."
 ///

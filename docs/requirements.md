@@ -267,7 +267,7 @@ This document outlines the functional and non-functional requirements for the Co
 - Meaningful error messages
 - Recovery suggestions provided
 
-#### NFR2.2: Data Integrity
+#### NFR2.2: Data Intecommandoy
 **Priority**: High  
 **Constraint**: Never corrupt Git repository.
 

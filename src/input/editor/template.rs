@@ -4,7 +4,7 @@
 /// Format follows conventional commits spec.
 pub fn commit_template() -> &'static str {
     "\n
-# --- grit — conventional commit ---
+# --- commando — conventional commit ---
 #
 # Format:  type(scope)!: description
 #

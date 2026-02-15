@@ -1,4 +1,4 @@
-//! CLI entry point — the composition root for grit.
+//! CLI entry point — the composition root for commando.
 //!
 //! The only file in the codebase that names concrete adapter types.
 //! Mode selection happens here. AppController never knows which mode ran.
@@ -8,8 +8,8 @@
 //! -i / --interactive:    interactive   — guided field-by-field prompts
 //!
 //! Multi-line messages with -m:
-//!   grit -m $'feat(auth): add OAuth\n\nBody text here.'
-//!   grit -m "feat(auth): add OAuth
+//!   commando -m $'feat(auth): add OAuth\n\nBody text here.'
+//!   commando -m "feat(auth): add OAuth
 //!
 //! Body text here."
 
@@ -24,7 +24,7 @@ use crate::input::{DirectSource, EditorSource, InteractiveSource};
 
 #[derive(Parser)]
 #[command(
-    name = "grit",
+    name = "commando",
     about = "Conventional commit helper",
     long_about = None,
 )]

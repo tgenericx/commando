@@ -33,22 +33,22 @@ cargo install commando
 
 ```bash
 # Interactive mode (default)
-grit
+commando
 
 # Editor mode
-grit
+commando
 
 # Direct mode
-grit -m "feat: add new feature"
+commando -m "feat: add new feature"
 
 # With scope
-grit -m "fix(api): resolve authentication issue"
+commando -m "fix(api): resolve authentication issue"
 ```
 
 ## Project Structure
 
 ```
-grit/
+commando/
 ├── src/
 │   ├── adapters/       # External interfaces (Git, UI)
 │   ├── compiler/       # DSL lexer, parser, and AST
@@ -141,8 +141,8 @@ graph TB
 
 ```bash
 # Clone the repository
-git clone https://github.com/tgenericx/grit.git
-cd grit
+git clone https://github.com/tgenericx/commando.git
+cd commando
 
 # Build the project
 cargo build

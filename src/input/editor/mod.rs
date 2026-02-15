@@ -25,7 +25,7 @@ struct TempCommitFile {
 impl TempCommitFile {
     /// Create the file and write the initial template to it.
     fn create() -> Result<Self, EditorError> {
-        let path = std::env::temp_dir().join(format!("grit-{}.txt", std::process::id()));
+        let path = std::env::temp_dir().join(format!("commando-{}.txt", std::process::id()));
         let mut file =
             std::fs::File::create(&path).map_err(|e| EditorError::TempFile(e.to_string()))?;
         file.write_all(commit_template().as_bytes())
@@ -217,7 +217,7 @@ mod tests {
 
     #[test]
     fn preserves_non_comment_lines() {
-        let input = "# grit template\nfeat: add login\n# ignore this";
+        let input = "# commando template\nfeat: add login\n# ignore this";
         assert_eq!(strip_comments(input), "feat: add login");
     }
 

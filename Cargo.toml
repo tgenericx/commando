@@ -1,5 +1,5 @@
 [package]
-name = "grit"
+name = "commando"
 version = "1.0.0"
 edition = "2024"
 authors = ["Hammed Anuoluwapo Pelumi <stationphast@gmail.com>"]
@@ -15,7 +15,7 @@ keywords = ["git", "commit", "cli", "conventional-commits"]
 categories = ["command-line-utilities", "development-tools"]
 
 [[bin]]
-name = "grit"
+name = "commando"
 path = "src/main.rs"
 
 [dependencies]

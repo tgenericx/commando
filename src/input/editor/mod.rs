@@ -66,8 +66,8 @@ impl EditorSource {
         }
 
         // ── 4. Read and strip comments ───────────────────────────────
-        let raw = std::fs::read_to_string(&path)
-            .map_err(|e| EditorError::ReadFailed(e.to_string()))?;
+        let raw =
+            std::fs::read_to_string(&path).map_err(|e| EditorError::ReadFailed(e.to_string()))?;
 
         let cleaned = strip_comments(&raw);
 
@@ -123,7 +123,8 @@ mod tests {
 
     #[test]
     fn preserves_multiline_with_comments_interspersed() {
-        let input = "feat(auth): add OAuth\n\n# body hint\nFull details here.\n\n# footer hint\nRefs: #42";
+        let input =
+            "feat(auth): add OAuth\n\n# body hint\nFull details here.\n\n# footer hint\nRefs: #42";
         let result = strip_comments(input);
         assert!(result.contains("feat(auth): add OAuth"));
         assert!(result.contains("Full details here."));
@@ -171,7 +172,10 @@ mod tests {
         let compiler = CompilerPipeline::new();
         let ast = compiler.compile(&cleaned).expect("compile failed");
         let msg = CommitMessage::try_from(ast).expect("domain failed");
-        assert!(msg.to_conventional_commit().starts_with("feat(auth)!: add OAuth"));
+        assert!(
+            msg.to_conventional_commit()
+                .starts_with("feat(auth)!: add OAuth")
+        );
         assert!(msg.to_conventional_commit().contains("BREAKING CHANGE:"));
     }
 

@@ -3,12 +3,15 @@ pub use error::InteractiveError;
 
 /// Interactive input source — collects commit fields one at a time via prompts.
 ///
-/// Implements InputSource<Output = StructuredInput>. Each section module
-/// handles one part of the conventional commit spec. The Ui trait is injected
-/// so this works with TerminalUI in production and MockUi in tests.
+/// Implements both InputSource (internal collection) and CommitMessageSource
+/// (the unified trait AppController depends on).
+///
+/// The Ui trait is injected so this works with TerminalUI in production
+/// and MockUi in tests. collect() and all sections/ are unchanged.
 mod sections;
 
-use crate::ports::input::{InputSource, StructuredInput};
+use crate::domain::CommitMessage;
+use crate::ports::input::{CommitMessageSource, InputSource, StructuredInput};
 use crate::ports::ui::Ui;
 
 pub struct InteractiveSource<U: Ui> {
@@ -21,6 +24,8 @@ impl<U: Ui> InteractiveSource<U> {
     }
 }
 
+/// Low-level field-by-field collection — unchanged.
+/// Still used by resolve() below and by tests.
 impl<U: Ui> InputSource for InteractiveSource<U> {
     type Output = StructuredInput;
     type Error = InteractiveError;
@@ -43,6 +48,19 @@ impl<U: Ui> InputSource for InteractiveSource<U> {
             breaking_change,
             refs,
         })
+    }
+}
+
+/// Unified trait impl — what AppController calls.
+///
+/// Wraps collect() and TryFrom. No changes to sections/.
+/// InteractiveError already has a Domain variant from the existing error.rs.
+impl<U: Ui> CommitMessageSource for InteractiveSource<U> {
+    type Error = InteractiveError;
+
+    fn resolve(&self) -> Result<CommitMessage, InteractiveError> {
+        let structured = self.collect()?;
+        CommitMessage::try_from(structured).map_err(InteractiveError::Domain)
     }
 }
 
@@ -84,12 +102,13 @@ mod tests {
         fn println(&self, _msg: &str) {}
     }
 
+    // ── existing collect() tests — all unchanged ──────────────────────────────
+
     #[test]
     fn collects_minimal_commit() {
         let ui = MockUi::new(vec!["feat", "", "add login page", "n", "n", ""]);
         let source = InteractiveSource::new(ui);
         let result = source.collect().unwrap();
-
         assert_eq!(result.commit_type, CommitType::Feat);
         assert_eq!(result.scope, None);
         assert_eq!(result.description, "add login page");
@@ -150,5 +169,32 @@ mod tests {
             result.breaking_change,
             Some("old tokens are invalidated".to_string())
         );
+    }
+
+    // ── resolve() tests ───────────────────────────────────────────────────────
+
+    #[test]
+    fn resolve_returns_commit_message() {
+        let ui = MockUi::new(vec!["feat", "", "add login page", "n", "n", ""]);
+        let source = InteractiveSource::new(ui);
+        let result = source.resolve().unwrap();
+        assert_eq!(result.to_conventional_commit(), "feat: add login page");
+    }
+
+    #[test]
+    fn resolve_with_scope_and_breaking() {
+        let ui = MockUi::new(vec![
+            "feat",
+            "auth",
+            "migrate to OAuth",
+            "n",
+            "y",
+            "sessions invalidated",
+            "",
+        ]);
+        let source = InteractiveSource::new(ui);
+        let msg = source.resolve().unwrap();
+        assert!(msg.to_conventional_commit().contains("feat(auth)!:"));
+        assert!(msg.to_conventional_commit().contains("BREAKING CHANGE:"));
     }
 }

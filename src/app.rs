@@ -1,51 +1,50 @@
 /// Application controller — the core orchestration layer.
 ///
-/// Generic over all three port traits. Never names a concrete type.
-/// All I/O goes through the injected Ui. All git interaction goes through
-/// the injected StagingChecker and CommitExecutor.
+/// Generic over all port traits. Never names a concrete type.
+/// After the CommitMessageSource migration, run() no longer knows
+/// whether input came from an editor, a CLI arg, or interactive prompts.
 ///
 /// Dependency graph:
-///   AppController → ports::{StagingChecker, InputSource, Ui, CommitExecutor}
-///   AppController → domain::CommitMessage (via TryFrom)
-///   AppController → nothing from adapters/ or input/
+///   AppController → ports::{StagingChecker, CommitMessageSource, Ui, CommitExecutor}
+///   AppController → domain::CommitMessage (returned by source.resolve())
+///   AppController → nothing from adapters/, compiler/, or input/
 use std::process::ExitCode;
 
-use crate::domain::CommitMessage;
 use crate::ports::{
     executor::{CommitExecutor, DryRunner},
-    input::{InputSource, StructuredInput},
+    input::CommitMessageSource,
     staging::StagingChecker,
     ui::Ui,
 };
 
-pub struct AppController<S, I, U, E>
+pub struct AppController<S, M, U, E>
 where
     S: StagingChecker,
-    I: InputSource<Output = StructuredInput>,
+    M: CommitMessageSource,
     U: Ui,
     E: CommitExecutor + DryRunner,
 {
     staging: S,
-    input: I,
+    source: M,
     ui: U,
     executor: E,
 }
 
-impl<S, I, U, E> AppController<S, I, U, E>
+impl<S, M, U, E> AppController<S, M, U, E>
 where
     S: StagingChecker,
-    I: InputSource<Output = StructuredInput>,
-    I::Error: std::fmt::Display,
     S::Error: std::fmt::Display,
+    M: CommitMessageSource,
+    M::Error: std::fmt::Display,
+    U: Ui,
     E: CommitExecutor + DryRunner,
     <E as CommitExecutor>::Error: std::fmt::Display,
     <E as DryRunner>::Error: std::fmt::Display,
-    U: Ui,
 {
-    pub fn new(staging: S, input: I, ui: U, executor: E) -> Self {
+    pub fn new(staging: S, source: M, ui: U, executor: E) -> Self {
         Self {
             staging,
-            input,
+            source,
             ui,
             executor,
         }
@@ -68,25 +67,17 @@ where
             }
         }
 
-        // ── Step 2: collect input ─────────────────────────────────────
-        let structured = match self.input.collect() {
-            Ok(s) => s,
-            Err(e) => {
-                self.ui.println(&format!("Error collecting input: {}", e));
-                return ExitCode::FAILURE;
-            }
-        };
-
-        // ── Step 3: build CommitMessage ───────────────────────────────
-        let message = match CommitMessage::try_from(structured) {
+        // ── Step 2: resolve input → CommitMessage ─────────────────────
+        // One call. Editor, direct, or interactive — AppController doesn't know.
+        let message = match self.source.resolve() {
             Ok(m) => m,
             Err(e) => {
-                self.ui.println(&format!("Validation error: {}", e));
+                self.ui.println(&format!("Error: {}", e));
                 return ExitCode::FAILURE;
             }
         };
 
-        // ── Step 4: preview + confirm ─────────────────────────────────
+        // ── Step 3: preview + confirm ─────────────────────────────────
         self.ui.show_preview(&message.to_conventional_commit());
 
         match self.ui.confirm("Proceed with commit?") {
@@ -101,7 +92,7 @@ where
             }
         }
 
-        // ── Step 5: execute ───────────────────────────────────────────
+        // ── Step 4: execute ───────────────────────────────────────────
         self.ui.println("\nExecuting git commit...");
         match self.executor.execute(&message.to_conventional_commit()) {
             Ok(result) => {
@@ -111,15 +102,12 @@ where
             }
             Err(e) => {
                 self.ui.println(&format!("✗ Commit failed: {}", e));
-
-                // Offer dry-run diagnosis
                 if let Ok(true) = self.ui.confirm("Try a dry-run to diagnose?") {
                     match self.executor.dry_run(&message.to_conventional_commit()) {
                         Ok(_) => self.ui.println("Dry-run succeeded. Check your git config."),
                         Err(e) => self.ui.println(&format!("Dry-run also failed: {}", e)),
                     }
                 }
-
                 ExitCode::FAILURE
             }
         }
@@ -129,16 +117,16 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::CommitType;
+    use crate::domain::{CommitMessage, CommitType};
     use crate::ports::{
         executor::{CommitExecutor, CommitResult, DryRunner},
-        input::{InputSource, StructuredInput},
+        input::CommitMessageSource,
         staging::StagingChecker,
         ui::{Ui, UiError},
     };
     use std::cell::RefCell;
 
-    // ── mock implementations ──────────────────────────────────────────
+    // ── mocks ─────────────────────────────────────────────────────────────────
 
     struct MockStaging(bool);
     impl StagingChecker for MockStaging {
@@ -148,12 +136,11 @@ mod tests {
         }
     }
 
-    struct MockInput(StructuredInput);
-    impl InputSource for MockInput {
-        type Output = StructuredInput;
+    struct MockSource(Result<CommitMessage, String>);
+    impl CommitMessageSource for MockSource {
         type Error = String;
-        fn collect(&self) -> Result<StructuredInput, String> {
-            Ok(self.0.clone())
+        fn resolve(&self) -> Result<CommitMessage, String> {
+            self.0.clone()
         }
     }
 
@@ -205,25 +192,25 @@ mod tests {
         }
     }
 
-    fn minimal_input() -> StructuredInput {
-        StructuredInput {
-            commit_type: CommitType::Feat,
-            scope: None,
-            description: "add feature".into(),
-            body: None,
-            breaking_change: None,
-            refs: None,
-        }
+    fn ok_source() -> MockSource {
+        MockSource(Ok(CommitMessage::new(
+            CommitType::Feat,
+            None,
+            "add feature".into(),
+            None,
+            None,
+        )
+        .unwrap()))
     }
 
     fn make_app(
         staged: bool,
         confirmed: bool,
         executor_ok: bool,
-    ) -> AppController<MockStaging, MockInput, MockUi, MockExecutor> {
+    ) -> AppController<MockStaging, MockSource, MockUi, MockExecutor> {
         AppController::new(
             MockStaging(staged),
-            MockInput(minimal_input()),
+            ok_source(),
             MockUi::new(confirmed),
             MockExecutor {
                 succeeds: executor_ok,
@@ -231,29 +218,36 @@ mod tests {
         )
     }
 
-    // ── tests ─────────────────────────────────────────────────────────
+    // ── tests ─────────────────────────────────────────────────────────────────
 
     #[test]
     fn succeeds_end_to_end() {
-        let app = make_app(true, true, true);
-        assert_eq!(app.run(), ExitCode::SUCCESS);
+        assert_eq!(make_app(true, true, true).run(), ExitCode::SUCCESS);
     }
 
     #[test]
     fn fails_when_no_staged_changes() {
-        let app = make_app(false, true, true);
-        assert_eq!(app.run(), ExitCode::FAILURE);
+        assert_eq!(make_app(false, true, true).run(), ExitCode::FAILURE);
     }
 
     #[test]
     fn fails_when_user_aborts_at_confirm() {
-        let app = make_app(true, false, true);
-        assert_eq!(app.run(), ExitCode::FAILURE);
+        assert_eq!(make_app(true, false, true).run(), ExitCode::FAILURE);
     }
 
     #[test]
     fn fails_when_executor_fails() {
-        let app = make_app(true, true, false);
+        assert_eq!(make_app(true, true, false).run(), ExitCode::FAILURE);
+    }
+
+    #[test]
+    fn fails_when_source_errors() {
+        let app = AppController::new(
+            MockStaging(true),
+            MockSource(Err("editor closed without saving".into())),
+            MockUi::new(true),
+            MockExecutor { succeeds: true },
+        );
         assert_eq!(app.run(), ExitCode::FAILURE);
     }
 }

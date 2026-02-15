@@ -15,17 +15,6 @@ pub struct CommitMessage {
 }
 
 impl CommitMessage {
-    /// Creates a new commit message with validation
-    ///
-    /// # Arguments
-    /// * `commit_type` - The type of commit (feat, fix, etc.)
-    /// * `scope` - Optional scope (e.g., "parser", "api")
-    /// * `description` - Short description (required, max 72 chars)
-    /// * `body` - Optional detailed description
-    /// * `breaking_change` - Optional breaking change description
-    ///
-    /// # Errors
-    /// Returns `DomainError` if any validation rules are violated
     pub fn new(
         commit_type: CommitType,
         scope: Option<String>,
@@ -33,22 +22,18 @@ impl CommitMessage {
         body: Option<String>,
         breaking_change: Option<String>,
     ) -> Result<Self, DomainError> {
-        // Validate description
         Self::validate_description(&description)?;
 
-        // Validate scope if provided
         if let Some(ref s) = scope {
             Self::validate_scope(s)?;
         }
 
-        // Validate body if provided
         if let Some(ref b) = body
             && b.trim().is_empty()
         {
             return Err(DomainError::EmptyBody);
         }
 
-        // Validate breaking change if provided
         if let Some(ref bc) = breaking_change
             && bc.trim().is_empty()
         {
@@ -66,64 +51,48 @@ impl CommitMessage {
 
     fn validate_description(description: &str) -> Result<(), DomainError> {
         let trimmed = description.trim();
-
         if trimmed.is_empty() {
             return Err(DomainError::EmptyDescription);
         }
-
         if trimmed.len() > 72 {
             return Err(DomainError::DescriptionTooLong(trimmed.len()));
         }
-
         Ok(())
     }
 
     pub fn validate_scope(scope: &str) -> Result<(), DomainError> {
         let trimmed = scope.trim();
-
         if trimmed.is_empty() {
             return Err(DomainError::InvalidScope(scope.to_string()));
         }
-
-        // Scope should be alphanumeric with hyphens and underscores
         if !trimmed
             .chars()
             .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
         {
             return Err(DomainError::InvalidScope(scope.to_string()));
         }
-
         Ok(())
     }
 
-    /// Renders the commit message as a conventional commit string
     pub fn to_conventional_commit(&self) -> String {
         let mut result = String::new();
 
-        // Type and scope
         result.push_str(self.commit_type.as_str());
         if let Some(ref scope) = self.scope {
             result.push('(');
             result.push_str(scope);
             result.push(')');
         }
-
-        // Breaking change indicator
         if self.breaking_change.is_some() {
             result.push('!');
         }
-
-        // Description
         result.push_str(": ");
         result.push_str(&self.description);
 
-        // Body
         if let Some(ref body) = self.body {
             result.push_str("\n\n");
             result.push_str(body);
         }
-
-        // Breaking change footer
         if let Some(ref breaking) = self.breaking_change {
             result.push_str("\n\nBREAKING CHANGE: ");
             result.push_str(breaking);
@@ -136,6 +105,38 @@ impl CommitMessage {
 impl std::fmt::Display for CommitMessage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.to_conventional_commit())
+    }
+}
+
+/// Bridge from compiler output to domain.
+///
+/// CommitAst carries raw strings — the parser never calls CommitType::from_str().
+/// This impl is where the domain validates those raw values:
+///   - commit_type string → CommitType variant (or DomainError::InvalidCommitType)
+///   - description length, scope charset, etc. via CommitMessage::new()
+///
+/// Breaking change: if the AST has a BREAKING CHANGE footer, use its value.
+/// If the header had '!' but no BREAKING CHANGE footer, that's still a breaking
+/// commit — the '!' is cosmetic in the header when the footer is absent.
+impl TryFrom<crate::compiler::CommitAst> for CommitMessage {
+    type Error = DomainError;
+
+    fn try_from(ast: crate::compiler::CommitAst) -> Result<Self, DomainError> {
+        let commit_type = CommitType::from_str(&ast.header.commit_type)?;
+
+        let breaking_change = ast
+            .footers
+            .iter()
+            .find(|f| f.key == "BREAKING CHANGE" || f.key == "BREAKING-CHANGE")
+            .map(|f| f.value.clone());
+
+        CommitMessage::new(
+            commit_type,
+            ast.header.scope,
+            ast.header.description,
+            ast.body.map(|b| b.content),
+            breaking_change,
+        )
     }
 }
 
@@ -252,7 +253,6 @@ mod tests {
             None,
         )
         .unwrap();
-
         assert_eq!(commit.to_conventional_commit(), "feat: add feature");
     }
 
@@ -266,7 +266,6 @@ mod tests {
             None,
         )
         .unwrap();
-
         assert_eq!(commit.to_conventional_commit(), "fix(parser): fix bug");
     }
 
@@ -280,7 +279,6 @@ mod tests {
             None,
         )
         .unwrap();
-
         assert_eq!(
             commit.to_conventional_commit(),
             "feat: add feature\n\nThis is the body"
@@ -297,7 +295,6 @@ mod tests {
             Some("Removes v1 API".to_string()),
         )
         .unwrap();
-
         assert_eq!(
             commit.to_conventional_commit(),
             "feat(api)!: change endpoint\n\nBREAKING CHANGE: Removes v1 API"
@@ -314,12 +311,51 @@ mod tests {
             Some("Old session-based auth is removed".to_string()),
         )
         .unwrap();
-
         let expected = "feat(auth)!: implement OAuth\n\n\
                         Added OAuth 2.0 support with refresh tokens\n\n\
                         BREAKING CHANGE: Old session-based auth is removed";
-
         assert_eq!(commit.to_conventional_commit(), expected);
+    }
+
+    // ── TryFrom<CommitAst> tests ──────────────────────────────────────────────
+
+    #[test]
+    fn try_from_ast_minimal() {
+        use crate::compiler::{CommitAst, CompilerPipeline};
+        let ast = CompilerPipeline::new().compile("feat: add login").unwrap();
+        let msg = CommitMessage::try_from(ast).unwrap();
+        assert_eq!(msg.to_conventional_commit(), "feat: add login");
+    }
+
+    #[test]
+    fn try_from_ast_with_scope_and_body() {
+        use crate::compiler::CompilerPipeline;
+        let input = "fix(auth): correct expiry\n\nSession tokens were not checked.";
+        let ast = CompilerPipeline::new().compile(input).unwrap();
+        let msg = CommitMessage::try_from(ast).unwrap();
+        assert!(
+            msg.to_conventional_commit()
+                .starts_with("fix(auth): correct expiry")
+        );
+    }
+
+    #[test]
+    fn try_from_ast_with_breaking_change_footer() {
+        use crate::compiler::CompilerPipeline;
+        let input = "feat!: redesign API\n\nBREAKING CHANGE: all v1 endpoints removed";
+        let ast = CompilerPipeline::new().compile(input).unwrap();
+        let msg = CommitMessage::try_from(ast).unwrap();
+        assert!(msg.to_conventional_commit().contains("BREAKING CHANGE:"));
+    }
+
+    #[test]
+    fn try_from_ast_invalid_type_returns_domain_error() {
+        use crate::compiler::CompilerPipeline;
+        let ast = CompilerPipeline::new()
+            .compile("notatype: do something")
+            .unwrap();
+        let result = CommitMessage::try_from(ast);
+        assert!(matches!(result, Err(DomainError::InvalidCommitType(_))));
     }
 
     #[test]
@@ -332,7 +368,6 @@ mod tests {
             None,
         )
         .unwrap();
-
         assert_eq!(format!("{}", commit), "feat(auth): implement OAuth");
     }
 }

@@ -38,12 +38,17 @@ jobs:
 
   create-release:
     name: Create Release
-    needs: publish-crates-io # Wait for crates.io publish first
+    needs: publish-crates-io
     runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       version: ${{ steps.get_version.outputs.version }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
       - name: Get latest tag
         id: get_version
         run: |

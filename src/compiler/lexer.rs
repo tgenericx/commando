@@ -6,13 +6,6 @@ use super::token::Token;
 /// Identifies structural elements but does NOT validate semantic correctness.
 /// "feat", "feat2", "invalid-type" all produce Token::Type — the domain
 /// decides whether the value is a valid CommitType.
-///
-/// Structure it handles:
-///   Line 1:       header  (type, optional scope, optional '!', description)
-///   Blank line:   section separator
-///   Next section: body (free text) or footer (key: value lines)
-///   Blank line:   separator between body and footer
-///   Last section: footer lines
 #[derive(Debug)]
 pub struct Lexer {
     input: String,
@@ -25,7 +18,6 @@ impl Lexer {
         }
     }
 
-    /// Tokenize the entire input into a Vec<Token>.
     pub fn tokenize(&self) -> Result<Vec<Token>, CompileError> {
         let mut tokens = Vec::new();
         let lines: Vec<&str> = self.input.lines().collect();
@@ -34,12 +26,10 @@ impl Lexer {
             return Err(CompileError::Lex("Empty input".to_string()));
         }
 
-        // ── Header (line 0) ──────────────────────────────────────────
         let header_tokens = self.tokenize_header(lines[0])?;
         tokens.extend(header_tokens);
         tokens.push(Token::Newline);
 
-        // ── Skip blank lines after header ────────────────────────────
         let mut i = 1;
         while i < lines.len() && lines[i].trim().is_empty() {
             i += 1;
@@ -50,13 +40,11 @@ impl Lexer {
             return Ok(tokens);
         }
 
-        // ── Body and/or footer ───────────────────────────────────────
         let remaining: Vec<&str> = lines[i..].to_vec();
         let (body_lines, footer_lines) = self.split_body_and_footer(&remaining);
 
         if !body_lines.is_empty() {
-            let body_text = body_lines.join("\n");
-            let trimmed = body_text.trim().to_string();
+            let trimmed = body_lines.join("\n").trim().to_string();
             if !trimmed.is_empty() {
                 tokens.push(Token::Body(trimmed));
                 tokens.push(Token::Newline);
@@ -75,7 +63,6 @@ impl Lexer {
         Ok(tokens)
     }
 
-    /// Tokenize the header line: `type[(scope)][!]: description`
     fn tokenize_header(&self, header: &str) -> Result<Vec<Token>, CompileError> {
         let mut tokens = Vec::new();
         let header = header.trim();
@@ -109,23 +96,19 @@ impl Lexer {
         Ok(tokens)
     }
 
-    /// Parse `type[(scope)][!]` from the part before ':'.
-    ///
-    /// Returns (type_string, optional_scope, has_breaking).
     fn parse_type_scope_breaking(
         &self,
         part: &str,
     ) -> Result<(String, Option<String>, bool), CompileError> {
         let part = part.trim();
 
-        // Strip trailing '!'
-        let (part, breaking) = if part.ends_with('!') {
-            (&part[..part.len() - 1], true)
+        // Use strip_suffix to satisfy clippy::manual_strip
+        let (part, breaking) = if let Some(stripped) = part.strip_suffix('!') {
+            (stripped, true)
         } else {
             (part, false)
         };
 
-        // Check for scope: type(scope)
         if let Some(open) = part.find('(') {
             let close = part
                 .rfind(')')
@@ -161,83 +144,43 @@ impl Lexer {
         }
     }
 
-    /// Split remaining lines into body lines and footer lines.
-    ///
-    /// Body comes first. Footers start at the first line that looks like
-    /// a footer token. A blank line may separate body from footer.
     fn split_body_and_footer<'a>(&self, lines: &'a [&'a str]) -> (Vec<&'a str>, Vec<&'a str>) {
-        // Find the first blank-line-then-footer boundary, or just the first footer line.
-        // Strategy: scan forward; once we see a footer-looking line after any content,
-        // everything from there is footer.
         let mut footer_start = None;
-
         for (i, line) in lines.iter().enumerate() {
             if self.is_footer_line(line) {
                 footer_start = Some(i);
                 break;
             }
         }
-
         match footer_start {
-            Some(idx) => {
-                // Trim trailing blank lines from body
-                let body = &lines[..idx];
-                let footer = &lines[idx..];
-                (body.to_vec(), footer.to_vec())
-            }
+            Some(idx) => (lines[..idx].to_vec(), lines[idx..].to_vec()),
             None => (lines.to_vec(), Vec::new()),
         }
     }
 
-    /// Determine whether a line is a footer token line.
-    ///
-    /// Per the conventional commits spec, a footer token is:
-    ///   - "BREAKING CHANGE" (with a space — special case)
-    ///   - A word-token: one or more chars, none of which are whitespace or ':'
-    ///     followed by ': ' or ' #'
-    ///
-    /// Heuristic: the part before ':' or ' #' must contain no lowercase
-    /// letters mixed with spaces (which would make it prose, not a token).
-    /// Single-word tokens starting with a capital letter are fine (Refs, Closes).
-    /// Multi-word tokens must be ALL-CAPS-WITH-SPACES (BREAKING CHANGE).
     fn is_footer_line(&self, line: &str) -> bool {
         let line = line.trim();
         if line.is_empty() {
             return false;
         }
-
-        // "BREAKING CHANGE: ..." — explicit special case
         if line.starts_with("BREAKING CHANGE:") || line.starts_with("BREAKING-CHANGE:") {
             return true;
         }
-
-        // "KEY: value" or "KEY #value"
-        let key = if let Some(colon_pos) = line.find(": ") {
-            &line[..colon_pos]
-        } else if let Some(hash_pos) = line.find(" #") {
-            &line[..hash_pos]
+        let key = if let Some(pos) = line.find(": ") {
+            &line[..pos]
+        } else if let Some(pos) = line.find(" #") {
+            &line[..pos]
         } else {
             return false;
         };
-
         let key = key.trim();
         if key.is_empty() {
             return false;
         }
-
-        // A valid footer key is either:
-        //   - A single word (no spaces), which may be CamelCase or lowercase: Refs, closes
-        //   - All-caps words separated by spaces or hyphens: BREAKING CHANGE
-        //   - Kebab-case starting with capital: Co-authored-by
-        let has_space = key.contains(' ');
-
-        if has_space {
-            // Multi-word keys must be all-caps
+        if key.contains(' ') {
             key.chars()
                 .all(|c| c.is_uppercase() || c == ' ' || c == '-')
         } else {
-            // Single-word: must start with a capital letter or be all-caps
-            // Rejects: lines that start with lowercase (those are prose)
             key.chars()
                 .next()
                 .map(|c| c.is_uppercase())
@@ -308,25 +251,21 @@ mod tests {
     #[test]
     fn missing_colon_is_error() {
         let result = Lexer::new("feat add login").tokenize();
-        assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), CompileError::Lex(_)));
     }
 
     #[test]
     fn empty_description_is_error() {
-        let result = Lexer::new("feat: ").tokenize();
-        assert!(result.is_err());
+        assert!(Lexer::new("feat: ").tokenize().is_err());
     }
 
     #[test]
     fn unclosed_scope_is_error() {
-        let result = Lexer::new("feat(auth: fix thing").tokenize();
-        assert!(result.is_err());
+        assert!(Lexer::new("feat(auth: fix thing").tokenize().is_err());
     }
 
     #[test]
     fn unknown_type_is_not_a_lex_error() {
-        // The lexer does not validate type values — domain does
         let tokens = lex("unknown-type: do something");
         assert_eq!(tokens[0], Token::Type("unknown-type".into()));
     }

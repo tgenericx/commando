@@ -24,9 +24,6 @@ pub enum ParseError {
 
     /// Footer line exists but is syntactically invalid.
     InvalidFooter(String),
-
-    /// Input ended before the grammar was satisfied.
-    UnexpectedEof,
 }
 
 impl std::fmt::Display for CompileError {
@@ -46,9 +43,6 @@ impl std::fmt::Display for ParseError {
             }
             ParseError::InvalidFooter(raw) => {
                 write!(f, "invalid footer syntax: '{}'", raw)
-            }
-            ParseError::UnexpectedEof => {
-                write!(f, "unexpected end of input")
             }
         }
     }

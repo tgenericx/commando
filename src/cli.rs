@@ -1,18 +1,3 @@
-//! CLI entry point — the composition root for commando.
-//!
-//! The only file in the codebase that names concrete adapter types.
-//! Mode selection happens here. AppController never knows which mode ran.
-//!
-//! Default (no flags):    editor mode   — opens $EDITOR with template
-//! -m / --message <MSG>:  direct mode   — inline string, no editor
-//! -i / --interactive:    interactive   — guided field-by-field prompts
-//!
-//! Multi-line messages with -m:
-//!   commando -m $'feat(auth): add OAuth\n\nBody text here.'
-//!   commando -m "feat(auth): add OAuth
-//!
-//! Body text here."
-
 use std::process::ExitCode;
 
 use clap::{ArgGroup, Parser};
@@ -22,10 +7,13 @@ use crate::app::AppController;
 use crate::compiler::CompilerPipeline;
 use crate::input::{DirectSource, EditorSource, InteractiveSource};
 
+#[cfg(feature = "tui")]
+use crate::adapters::ui::RatatuiUI;
+
 #[derive(Parser)]
 #[command(
     name = "commando",
-    about = "Conventional commit helper",
+    about = "Conventional commit helper with optional rich TUI",
     long_about = None,
 )]
 #[command(group(ArgGroup::new("mode").args(["message", "interactive"])))]
@@ -38,6 +26,11 @@ struct Cli {
     /// Open field-by-field interactive prompts instead of the editor.
     #[arg(short = 'i', long = "interactive")]
     interactive: bool,
+
+    /// Use rich TUI interface (requires 'tui' feature)
+    #[cfg(feature = "tui")]
+    #[arg(long = "tui")]
+    use_tui: bool,
 }
 
 pub fn run() -> ExitCode {
@@ -45,19 +38,46 @@ pub fn run() -> ExitCode {
 
     let staging = GitStagingChecker;
     let executor = GitCommitExecutor;
-    let ui = TerminalUI;
+
+    // Select UI implementation based on flags and features
+    #[cfg(feature = "tui")]
+    let use_ratatui = cli.use_tui;
+
+    #[cfg(not(feature = "tui"))]
+    let use_ratatui = false;
 
     match (cli.message, cli.interactive) {
         (Some(msg), _) => {
+            // Direct mode - use simple terminal UI
             let source = DirectSource::new(msg, CompilerPipeline::new());
+            let ui = TerminalUI;
             AppController::new(staging, source, ui, executor).run()
         }
         (None, true) => {
-            let source = InteractiveSource::new(TerminalUI);
-            AppController::new(staging, source, ui, executor).run()
+            // Interactive mode - choose UI based on flag
+            if use_ratatui {
+                #[cfg(feature = "tui")]
+                {
+                    let ui = RatatuiUI;
+                    let source = InteractiveSource::new(ui);
+                    AppController::new(staging, source, ui, executor).run()
+                }
+                #[cfg(not(feature = "tui"))]
+                {
+                    eprintln!("Error: --tui flag requires the 'tui' feature to be enabled");
+                    eprintln!("Rebuild with: cargo build --features tui");
+                    ExitCode::FAILURE
+                }
+            } else {
+                let ui = TerminalUI;
+                let source = InteractiveSource::new(ui);
+                AppController::new(staging, source, ui, executor).run()
+            }
         }
         (None, false) => {
+            // Editor mode - use simple terminal UI
             let source = EditorSource::new(CompilerPipeline::new());
+            let ui = TerminalUI;
             AppController::new(staging, source, ui, executor).run()
         }
     }

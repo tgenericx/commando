@@ -1,11 +1,7 @@
-/// Terminal UI adapter — plain stdin/stdout implementation of the Ui port.
-///
-/// This is the production UI. RatatuiUI will be a second impl of the same
-/// trait. Swapping them requires changing one line in cli.rs.
+use crate::ports::ui::{Ui, UiError};
 use std::io::{self, Write};
 
-use crate::ports::ui::{Ui, UiError};
-
+#[derive(Copy, Clone)]
 pub struct TerminalUI;
 
 impl Ui for TerminalUI {

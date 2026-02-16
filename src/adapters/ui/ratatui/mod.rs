@@ -7,12 +7,14 @@
 //! - Syntax highlighting for commit messages
 //! - Beautiful preview rendering
 //! - Keyboard navigation and shortcuts
+//! - Selection menus for predefined options
 //!
 //! Swappable with TerminalUI — just change one line in cli.rs.
 
 mod confirm;
 mod preview;
 mod prompt;
+mod select;
 mod syntax;
 mod terminal_setup;
 
@@ -22,6 +24,7 @@ use crossterm::event::{self, Event, KeyCode, KeyModifiers};
 pub use confirm::ConfirmRenderer;
 pub use preview::PreviewRenderer;
 pub use prompt::PromptRenderer;
+pub use select::{SelectOption, SelectRenderer};
 pub use terminal_setup::TerminalManager;
 
 #[derive(Copy, Clone)]
@@ -150,9 +153,30 @@ impl Ui for RatatuiUI {
         }
     }
 
+    fn select(
+        &self,
+        title: &str,
+        options: Vec<(String, String, String)>,
+    ) -> Result<String, UiError> {
+        let mut terminal = TerminalManager::setup()?;
+
+        let select_options: Vec<SelectOption> = options
+            .into_iter()
+            .map(|(value, label, description)| SelectOption {
+                value,
+                label,
+                description,
+            })
+            .collect();
+
+        let result = SelectRenderer::select(&mut terminal, title, select_options);
+
+        TerminalManager::restore(&mut terminal)?;
+        result
+    }
+
     fn println(&self, msg: &str) {
-        // For simple messages, just use stdout
-        // This is called during the flow when not in TUI mode
+        // with this user will not see what's printed until they exist TUI, which is not a good UX
         println!("{}", msg);
     }
 }

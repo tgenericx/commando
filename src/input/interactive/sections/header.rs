@@ -7,37 +7,71 @@ use crate::domain::{CommitMessage, CommitType};
 use crate::input::interactive::InteractiveError;
 use crate::ports::ui::Ui;
 
+/// Collect commit type using a selection UI for better UX
 pub fn collect_type<U: Ui>(ui: &U) -> Result<CommitType, InteractiveError> {
-    ui.println("1. Commit type:");
-    ui.println("   feat      — new feature");
-    ui.println("   fix       — bug fix");
-    ui.println("   docs      — documentation only");
-    ui.println("   style     — formatting, whitespace");
-    ui.println("   refactor  — code restructuring");
-    ui.println("   perf      — performance improvement");
-    ui.println("   test      — adding or fixing tests");
-    ui.println("   build     — build system / dependencies");
-    ui.println("   ci        — CI configuration");
-    ui.println("   chore     — maintenance");
-    ui.println("   revert    — revert a previous commit");
-    ui.println("");
+    let options = vec![
+        (
+            "feat".to_string(),
+            "feat".to_string(),
+            "new feature".to_string(),
+        ),
+        ("fix".to_string(), "fix".to_string(), "bug fix".to_string()),
+        (
+            "docs".to_string(),
+            "docs".to_string(),
+            "documentation only".to_string(),
+        ),
+        (
+            "style".to_string(),
+            "style".to_string(),
+            "formatting, whitespace".to_string(),
+        ),
+        (
+            "refactor".to_string(),
+            "refactor".to_string(),
+            "code restructuring".to_string(),
+        ),
+        (
+            "perf".to_string(),
+            "perf".to_string(),
+            "performance improvement".to_string(),
+        ),
+        (
+            "test".to_string(),
+            "test".to_string(),
+            "adding or fixing tests".to_string(),
+        ),
+        (
+            "build".to_string(),
+            "build".to_string(),
+            "build system / dependencies".to_string(),
+        ),
+        (
+            "ci".to_string(),
+            "ci".to_string(),
+            "CI configuration".to_string(),
+        ),
+        (
+            "chore".to_string(),
+            "chore".to_string(),
+            "maintenance".to_string(),
+        ),
+        (
+            "revert".to_string(),
+            "revert".to_string(),
+            "revert a previous commit".to_string(),
+        ),
+    ];
 
-    loop {
-        let input = ui.prompt("Type: ").map_err(InteractiveError::Ui)?;
+    let selected = ui
+        .select("1. Select commit type:", options)
+        .map_err(InteractiveError::Ui)?;
 
-        match CommitType::from_str(&input) {
-            Ok(ct) => {
-                ui.println("");
-                return Ok(ct);
-            }
-            Err(_) => {
-                ui.println(&format!(
-                    "  ✗ '{}' is not valid. Choose from the list above.",
-                    input
-                ));
-            }
-        }
-    }
+    CommitType::from_str(&selected).map_err(|_| {
+        InteractiveError::Ui(crate::ports::ui::UiError(
+            "Invalid commit type selected".to_string(),
+        ))
+    })
 }
 
 pub fn collect_scope<U: Ui>(ui: &U) -> Result<Option<String>, InteractiveError> {

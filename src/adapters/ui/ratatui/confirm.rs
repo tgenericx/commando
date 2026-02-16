@@ -1,13 +1,13 @@
-use std::io;
+use crate::ports::ui::UiError;
 use ratatui::{
+    Terminal,
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
-    Terminal,
 };
-use crate::ports::ui::UiError;
+use std::io;
 
 pub struct ConfirmRenderer;
 

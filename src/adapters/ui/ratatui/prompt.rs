@@ -1,13 +1,13 @@
-use std::io;
+use crate::ports::ui::UiError;
 use ratatui::{
+    Terminal,
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
-    Terminal,
 };
-use crate::ports::ui::UiError;
+use std::io;
 
 pub struct PromptRenderer;
 
@@ -35,7 +35,11 @@ impl PromptRenderer {
 
                 // Title
                 let title = Paragraph::new(label)
-                    .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
+                    .style(
+                        Style::default()
+                            .fg(Color::Cyan)
+                            .add_modifier(Modifier::BOLD),
+                    )
                     .alignment(Alignment::Left)
                     .block(Block::default().borders(Borders::NONE));
                 f.render_widget(title, chunks[0]);
@@ -65,7 +69,9 @@ impl PromptRenderer {
                     .border_style(Style::default().fg(Color::Gray))
                     .title(Span::styled(
                         count_text,
-                        Style::default().fg(count_color).add_modifier(Modifier::BOLD),
+                        Style::default()
+                            .fg(count_color)
+                            .add_modifier(Modifier::BOLD),
                     ));
 
                 let input_widget = Paragraph::new(input)
@@ -79,14 +85,12 @@ impl PromptRenderer {
                 f.set_cursor_position((cursor_x, cursor_y));
 
                 // Help text
-                let help = vec![
-                    Line::from(vec![
-                        Span::styled("Enter", Style::default().fg(Color::Green)),
-                        Span::raw(" to confirm | "),
-                        Span::styled("Esc", Style::default().fg(Color::Red)),
-                        Span::raw(" to cancel"),
-                    ]),
-                ];
+                let help = vec![Line::from(vec![
+                    Span::styled("Enter", Style::default().fg(Color::Green)),
+                    Span::raw(" to confirm | "),
+                    Span::styled("Esc", Style::default().fg(Color::Red)),
+                    Span::raw(" to cancel"),
+                ])];
                 let help_widget = Paragraph::new(help)
                     .style(Style::default().fg(Color::DarkGray))
                     .alignment(Alignment::Center);

@@ -1,14 +1,14 @@
-use std::io;
+use super::syntax::SyntaxHighlighter;
+use crate::ports::ui::UiError;
 use ratatui::{
+    Terminal,
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph, Wrap},
-    Terminal,
 };
-use crate::ports::ui::UiError;
-use super::syntax::SyntaxHighlighter;
+use std::io;
 
 pub struct PreviewRenderer;
 

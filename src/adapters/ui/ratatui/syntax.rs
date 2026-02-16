@@ -17,9 +17,7 @@ impl SyntaxHighlighter {
             } else if line.starts_with("BREAKING CHANGE:") {
                 let mut spans = vec![Span::styled(
                     "BREAKING CHANGE:",
-                    Style::default()
-                        .fg(Color::Red)
-                        .add_modifier(Modifier::BOLD),
+                    Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
                 )];
                 if let Some(rest) = line.strip_prefix("BREAKING CHANGE:") {
                     spans.push(Span::styled(rest, Style::default().fg(Color::Red)));
@@ -58,9 +56,7 @@ impl SyntaxHighlighter {
             let type_color = Self::type_color(type_str);
             spans.push(Span::styled(
                 type_str.to_string(),
-                Style::default()
-                    .fg(type_color)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(type_color).add_modifier(Modifier::BOLD),
             ));
 
             // Add scope if present
@@ -75,9 +71,7 @@ impl SyntaxHighlighter {
             if has_breaking {
                 spans.push(Span::styled(
                     "!".to_string(),
-                    Style::default()
-                        .fg(Color::Red)
-                        .add_modifier(Modifier::BOLD),
+                    Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
                 ));
             }
 

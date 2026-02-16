@@ -65,11 +65,12 @@ impl Ui for TerminalUI {
 
             let input = input.trim();
 
-            // Try to parse as number
-            if let Ok(num) = input.parse::<usize>() {
-                if num >= 1 && num <= options.len() {
-                    return Ok(options[num - 1].0.clone());
-                }
+            // Try to parse as number - fixed collapsible if
+            if let Ok(num) = input.parse::<usize>()
+                && num >= 1
+                && num <= options.len()
+            {
+                return Ok(options[num - 1].0.clone());
             }
 
             // Try to match by value or label

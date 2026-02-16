@@ -20,16 +20,34 @@ impl From<std::io::Error> for UiError {
     }
 }
 
+/// The Ui port — abstracts all user interaction
 pub trait Ui {
-    /// Prompt the user with a label, return trimmed input.
+    /// Prompt the user for a single line of input
     fn prompt(&self, label: &str) -> Result<String, UiError>;
 
-    /// Show the commit preview.
+    /// Show a preview of content (e.g., final commit message)
     fn show_preview(&self, content: &str);
 
-    /// Ask a yes/no question. Returns true for y/yes.
+    /// Ask for yes/no confirmation
     fn confirm(&self, msg: &str) -> Result<bool, UiError>;
 
-    /// Print a line (with newline).
+    /// Display a selection menu and return the selected value
+    ///
+    /// # Arguments
+    /// * `title` - The title/prompt for the selection
+    /// * `options` - A vector of tuples (value, label, description)
+    ///   - value: The string value to return when selected
+    ///   - label: The display label for the option
+    ///   - description: A brief description of what the option means
+    ///
+    /// # Returns
+    /// The value string of the selected option
+    fn select(
+        &self,
+        title: &str,
+        options: Vec<(String, String, String)>,
+    ) -> Result<String, UiError>;
+
+    /// Print a message to the user
     fn println(&self, msg: &str);
 }

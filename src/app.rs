@@ -80,12 +80,26 @@ where
         // ── Step 3: preview + confirm ─────────────────────────────────
         self.ui.show_preview(&message.to_conventional_commit());
 
-        match self.ui.confirm("Proceed with commit?") {
-            Ok(true) => {}
-            Ok(false) => {
+        let options = vec![
+            (
+                "yes".to_string(),
+                "Yes".to_string(),
+                "Proceed with commit".to_string(),
+            ),
+            (
+                "no".to_string(),
+                "No".to_string(),
+                "Abort the commit".to_string(),
+            ),
+        ];
+
+        match self.ui.select("Proceed with commit?", options) {
+            Ok(choice) if choice == "yes" => {}
+            Ok(choice) if choice == "no" => {
                 self.ui.println("\nCommit aborted.");
                 return ExitCode::FAILURE;
             }
+            Ok(_) => unreachable!(),
             Err(e) => {
                 self.ui.println(&format!("Error: {}", e));
                 return ExitCode::FAILURE;
@@ -102,11 +116,33 @@ where
             }
             Err(e) => {
                 self.ui.println(&format!("✗ Commit failed: {}", e));
-                if let Ok(true) = self.ui.confirm("Try a dry-run to diagnose?") {
-                    match self.executor.dry_run(&message.to_conventional_commit()) {
-                        Ok(_) => self.ui.println("Dry-run succeeded. Check your git config."),
-                        Err(e) => self.ui.println(&format!("Dry-run also failed: {}", e)),
+
+                // Replace confirm with select for dry-run
+                let dry_run_options = vec![
+                    (
+                        "yes".to_string(),
+                        "Yes".to_string(),
+                        "Run dry-run to diagnose".to_string(),
+                    ),
+                    (
+                        "no".to_string(),
+                        "No".to_string(),
+                        "Skip dry-run".to_string(),
+                    ),
+                ];
+
+                match self
+                    .ui
+                    .select("Try a dry-run to diagnose?", dry_run_options)
+                {
+                    Ok(choice) if choice == "yes" => {
+                        match self.executor.dry_run(&message.to_conventional_commit()) {
+                            Ok(_) => self.ui.println("Dry-run succeeded. Check your git config."),
+                            Err(e) => self.ui.println(&format!("Dry-run also failed: {}", e)),
+                        }
                     }
+                    Ok(_) => {} // User chose "no"
+                    Err(e) => self.ui.println(&format!("Error: {}", e)),
                 }
                 ExitCode::FAILURE
             }
@@ -145,7 +181,7 @@ mod tests {
     }
 
     struct MockUi {
-        confirmed: bool,
+        confirmed: bool, // We'll repurpose this to mean "select returns yes" when true
         output: RefCell<Vec<String>>,
     }
     impl MockUi {
@@ -160,10 +196,19 @@ mod tests {
         fn prompt(&self, _: &str) -> Result<String, UiError> {
             Ok(String::new())
         }
-        fn show_preview(&self, _: &str) {}
-        fn confirm(&self, _: &str) -> Result<bool, UiError> {
-            Ok(self.confirmed)
+        fn select<T: Clone>(
+            &self,
+            _: &str,
+            options: Vec<(T, String, String)>,
+        ) -> Result<T, UiError> {
+            // If confirmed is true, return the first option (yes), otherwise return the second (no)
+            if self.confirmed {
+                Ok(options[0].0.clone())
+            } else {
+                Ok(options[1].0.clone())
+            }
         }
+        fn show_preview(&self, _: &str) {}
         fn println(&self, msg: &str) {
             self.output.borrow_mut().push(msg.to_string());
         }

@@ -1,12 +1,12 @@
 //! Grid/card renderer
 
+use super::super::options::SelectOption;
 use ratatui::{
     Frame,
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, Paragraph},
 };
-use super::super::options::SelectOption;
 
 pub struct GridRenderer;
 
@@ -18,7 +18,8 @@ impl GridRenderer {
         selected: usize,
         grid_cols: usize,
     ) {
-        let rows = (options.len() + grid_cols - 1) / grid_cols;
+        // Use div_ceil instead of manual calculation
+        let rows = options.len().div_ceil(grid_cols);
         let row_height = area.height / rows as u16;
 
         for row in 0..rows {
@@ -39,7 +40,9 @@ impl GridRenderer {
                 };
 
                 let border_style = if is_selected {
-                    Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD)
                 } else {
                     Style::default().fg(Color::DarkGray)
                 };

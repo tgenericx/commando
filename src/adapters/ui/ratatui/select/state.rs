@@ -36,18 +36,18 @@ impl<T: Clone> Selector<T> {
         loop {
             self.render(terminal)?;
 
-            if let Event::Key(key) = event::read()? {
-                if let Some(action) = self.handle_key(key) {
-                    match action {
-                        Action::Select => return Ok(self.options[self.selected].value.clone()),
-                        Action::Cancel => return Err(UiError("Selection cancelled".into())), // Fixed: removed .Other
-                        Action::Move(new_idx) => {
-                            self.selected = new_idx;
-                            self.preview_scroll = 0;
-                        }
-                        Action::ScrollPreview(delta) => {
-                            self.preview_scroll = self.preview_scroll.saturating_add_signed(delta);
-                        }
+            if let Event::Key(key) = event::read()?
+                && let Some(action) = self.handle_key(key)
+            {
+                match action {
+                    Action::Select => return Ok(self.options[self.selected].value.clone()),
+                    Action::Cancel => return Err(UiError("Selection cancelled".into())),
+                    Action::Move(new_idx) => {
+                        self.selected = new_idx;
+                        self.preview_scroll = 0;
+                    }
+                    Action::ScrollPreview(delta) => {
+                        self.preview_scroll = self.preview_scroll.saturating_add_signed(delta);
                     }
                 }
             }

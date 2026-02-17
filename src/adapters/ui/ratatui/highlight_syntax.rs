@@ -9,7 +9,6 @@ pub struct CommitHighlighter;
 
 impl CommitHighlighter {
     pub fn highlight(content: &str) -> Vec<Line<'_>> {
-        // Added <'_>
         let mut lines = Vec::new();
         let mut in_body = false;
         let mut potential_footers = Vec::new();
@@ -45,7 +44,6 @@ impl CommitHighlighter {
     }
 
     fn highlight_subject(line: &str) -> Line<'_> {
-        // Added <'_>
         let mut spans = Vec::new();
 
         // Check for conventional commit format (type(scope)!: subject)
@@ -151,27 +149,28 @@ impl CommitHighlighter {
     }
 
     fn highlight_body(line: &str) -> Line<'_> {
-        // Added <'_>
         let mut spans = Vec::new();
         let mut remaining = line;
 
         while !remaining.is_empty() {
-            if let Some(start) = remaining.find(|c| c == '#' || c == '@') {
+            // Fix 1: Use array of chars instead of closure
+            if let Some(start) = remaining.find(['#', '@']) {
                 if start > 0 {
                     spans.push(Span::raw(remaining[..start].to_string()));
                 }
 
                 let token = &remaining[start..];
 
-                if token.starts_with('#') {
-                    let (num, rest) = Self::extract_digits(&token[1..]);
+                // Fix 2 & 3: Use strip_prefix instead of manual slicing
+                if let Some(stripped) = token.strip_prefix('#') {
+                    let (num, rest) = Self::extract_digits(stripped);
                     spans.push(Span::styled(
                         format!("#{}", num),
                         Style::default().fg(Color::Yellow),
                     ));
                     remaining = rest;
-                } else if token.starts_with('@') {
-                    let (username, rest) = Self::extract_username(&token[1..]);
+                } else if let Some(stripped) = token.strip_prefix('@') {
+                    let (username, rest) = Self::extract_username(stripped);
                     spans.push(Span::styled(
                         format!("@{}", username),
                         Style::default().fg(Color::Green),

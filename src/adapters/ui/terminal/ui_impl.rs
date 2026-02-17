@@ -21,70 +21,47 @@ impl Ui for TerminalUI {
         Ok(input.trim().to_string())
     }
 
-    fn show_preview(&self, content: &str) {
-        println!("\n=== Preview ===\n");
-        println!("{}", content);
-        println!();
-    }
-
-    fn confirm(&self, msg: &str) -> Result<bool, UiError> {
-        print!("{} (y/n): ", msg);
-        io::stdout().flush().map_err(|e| UiError(e.to_string()))?;
-
-        let mut input = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .map_err(|e| UiError(e.to_string()))?;
-
-        let response = input.trim().to_lowercase();
-        Ok(response == "y" || response == "yes")
-    }
-
-    fn select(
+    fn select<T: Clone>(
         &self,
         title: &str,
-        options: Vec<(String, String, String)>,
-    ) -> Result<String, UiError> {
-        println!("{}", title);
-        println!();
-
-        // Display all options with numbers
-        for (idx, (_, label, description)) in options.iter().enumerate() {
-            println!("  {}. {:<12} — {}", idx + 1, label, description);
+        options: Vec<(T, String, String)>,
+    ) -> Result<T, UiError> {
+        if options.is_empty() {
+            return Err(UiError("No options provided to select".into()));
         }
+
         println!();
+        println!("{title}");
+        println!("{}", "-".repeat(title.len()));
+
+        for (i, (_, label, description)) in options.iter().enumerate() {
+            println!("{}. {} - {}", i + 1, label, description);
+        }
 
         loop {
-            print!("Select (1-{}): ", options.len());
-            io::stdout().flush().map_err(|e| UiError(e.to_string()))?;
+            print!("\nEnter choice number: ");
+            io::stdout().flush()?;
 
             let mut input = String::new();
-            io::stdin()
-                .read_line(&mut input)
-                .map_err(|e| UiError(e.to_string()))?;
+            io::stdin().read_line(&mut input)?;
 
-            let input = input.trim();
-
-            // Try to parse as number - fixed collapsible if
-            if let Ok(num) = input.parse::<usize>()
-                && num >= 1
-                && num <= options.len()
-            {
-                return Ok(options[num - 1].0.clone());
-            }
-
-            // Try to match by value or label
-            for (value, label, _) in &options {
-                if input.eq_ignore_ascii_case(value) || input.eq_ignore_ascii_case(label) {
-                    return Ok(value.clone());
+            if let Ok(index) = input.trim().parse::<usize>() {
+                if index >= 1 && index <= options.len() {
+                    return Ok(options[index - 1].0.clone());
                 }
             }
 
             println!(
-                "  ✗ Invalid selection. Please enter a number from 1 to {}",
+                "Invalid selection. Please enter a number between 1 and {}.",
                 options.len()
             );
         }
+    }
+
+    fn show_preview(&self, content: &str) {
+        println!("\n=== Preview ===\n");
+        println!("{}", content);
+        println!();
     }
 
     fn println(&self, msg: &str) {

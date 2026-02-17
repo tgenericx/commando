@@ -4,26 +4,34 @@ use crossterm::{
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{Terminal, backend::CrosstermBackend};
-use std::io::{self, stdout};
+use std::io::{self, Stdout};
 
-pub struct TerminalManager;
+pub struct RatatuiUi {
+    terminal: Terminal<CrosstermBackend<Stdout>>,
+}
 
-impl TerminalManager {
-    /// Initialize the terminal for TUI mode
-    pub fn setup() -> Result<Terminal<CrosstermBackend<io::Stdout>>, UiError> {
-        enable_raw_mode().map_err(|e| UiError(e.to_string()))?;
-        let mut stdout = stdout();
-        execute!(stdout, EnterAlternateScreen).map_err(|e| UiError(e.to_string()))?;
+impl RatatuiUi {
+    pub fn new() -> Result<Self, UiError> {
+        enable_raw_mode()?;
+
+        let mut stdout = io::stdout();
+        execute!(stdout, EnterAlternateScreen)?;
+
         let backend = CrosstermBackend::new(stdout);
-        Terminal::new(backend).map_err(|e| UiError(e.to_string()))
+        let terminal = Terminal::new(backend)?;
+
+        Ok(Self { terminal })
     }
 
-    /// Clean up terminal state
-    pub fn restore(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<(), UiError> {
-        disable_raw_mode().map_err(|e| UiError(e.to_string()))?;
-        execute!(terminal.backend_mut(), LeaveAlternateScreen)
-            .map_err(|e| UiError(e.to_string()))?;
-        terminal.show_cursor().map_err(|e| UiError(e.to_string()))?;
-        Ok(())
+    pub fn terminal_mut(&mut self) -> &mut Terminal<CrosstermBackend<Stdout>> {
+        &mut self.terminal
+    }
+}
+
+impl Drop for RatatuiUi {
+    fn drop(&mut self) {
+        let _ = self.terminal.show_cursor();
+        let _ = execute!(self.terminal.backend_mut(), LeaveAlternateScreen);
+        let _ = disable_raw_mode();
     }
 }

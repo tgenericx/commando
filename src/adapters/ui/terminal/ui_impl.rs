@@ -10,13 +10,11 @@ pub struct TerminalUI;
 
 impl Ui for TerminalUI {
     fn prompt(&self, label: &str) -> Result<String, UiError> {
-        print!("{}", label);
-        io::stdout().flush().map_err(|e| UiError(e.to_string()))?;
+        print!("{label}: ");
+        io::stdout().flush()?;
 
         let mut input = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .map_err(|e| UiError(e.to_string()))?;
+        io::stdin().read_line(&mut input)?;
 
         Ok(input.trim().to_string())
     }

@@ -124,12 +124,12 @@ impl<'a> PromptState<'a> {
         }
     }
 
-    // ... rest of the methods remain the same ...
     fn insert_char(&mut self, c: char) {
-        if let Some(max) = self.config.max_length {
-            if self.input.chars().count() >= max {
-                return;
-            }
+        // Collapsed if statement
+        if let Some(max) = self.config.max_length
+            && self.input.chars().count() >= max
+        {
+            return;
         }
 
         let mut chars: Vec<char> = self.input.chars().collect();
@@ -171,11 +171,11 @@ impl<'a> PromptState<'a> {
         // Length validation
         self.validation = Validator::validate_length(&self.input, self.config.max_length);
 
-        // Custom validation (if valid so far)
-        if let ValidationState::Valid = self.validation {
-            if let Some(validator) = &self.config.validator {
-                self.validation = Validator::apply_custom(&self.input, Some(validator));
-            }
+        // Custom validation (if valid so far) - collapsed if statement
+        if let ValidationState::Valid = self.validation
+            && let Some(validator) = &self.config.validator
+        {
+            self.validation = Validator::apply_custom(&self.input, Some(validator));
         }
     }
 

@@ -43,10 +43,11 @@ impl Ui for TerminalUI {
             let mut input = String::new();
             io::stdin().read_line(&mut input)?;
 
-            if let Ok(index) = input.trim().parse::<usize>() {
-                if index >= 1 && index <= options.len() {
-                    return Ok(options[index - 1].0.clone());
-                }
+            if let Ok(index) = input.trim().parse::<usize>()
+                && index >= 1
+                && index <= options.len()
+            {
+                return Ok(options[index - 1].0.clone());
             }
 
             println!(

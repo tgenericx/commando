@@ -4,12 +4,15 @@ use super::state::PromptState;
 use crate::ports::ui::UiError;
 use ratatui::Terminal;
 
+/// Type alias for validator function
+pub type ValidatorFn<'a> = Box<dyn Fn(&str) -> Result<(), String> + 'a>;
+
 /// Configuration for a text prompt
 pub struct PromptBuilder<'a> {
     pub(crate) message: &'a str,
     pub(crate) initial_value: String,
     pub(crate) placeholder: Option<&'a str>,
-    pub(crate) validator: Option<Box<dyn Fn(&str) -> Result<(), String> + 'a>>,
+    pub(crate) validator: Option<ValidatorFn<'a>>,
     pub(crate) max_length: Option<usize>,
     pub(crate) secret: bool,
     pub(crate) help_text: Option<String>,

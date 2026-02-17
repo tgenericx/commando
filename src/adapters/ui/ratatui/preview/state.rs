@@ -44,33 +44,33 @@ impl PreviewState {
         loop {
             self.render(terminal)?;
 
-            if let Event::Key(key) = event::read()? {
-                if let Some(action) = self.handle_key(key) {
-                    match action {
-                        Action::Close => return Ok(()),
-                        Action::ScrollUp(amount) => {
-                            self.scroll = self.scroll.saturating_sub(amount);
-                        }
-                        Action::ScrollDown(amount) => {
-                            let max_scroll = self.total_lines.saturating_sub(1) as u16;
-                            self.scroll = self.scroll.saturating_add(amount).min(max_scroll);
-                        }
-                        Action::PageUp => {
-                            self.scroll = self.scroll.saturating_sub(self.config.page_size);
-                        }
-                        Action::PageDown => {
-                            let max_scroll = self.total_lines.saturating_sub(1) as u16;
-                            self.scroll = self
-                                .scroll
-                                .saturating_add(self.config.page_size)
-                                .min(max_scroll);
-                        }
-                        Action::Home => {
-                            self.scroll = 0;
-                        }
-                        Action::End => {
-                            self.scroll = self.total_lines.saturating_sub(1) as u16;
-                        }
+            if let Event::Key(key) = event::read()?
+                && let Some(action) = self.handle_key(key)
+            {
+                match action {
+                    Action::Close => return Ok(()),
+                    Action::ScrollUp(amount) => {
+                        self.scroll = self.scroll.saturating_sub(amount);
+                    }
+                    Action::ScrollDown(amount) => {
+                        let max_scroll = self.total_lines.saturating_sub(1) as u16;
+                        self.scroll = self.scroll.saturating_add(amount).min(max_scroll);
+                    }
+                    Action::PageUp => {
+                        self.scroll = self.scroll.saturating_sub(self.config.page_size);
+                    }
+                    Action::PageDown => {
+                        let max_scroll = self.total_lines.saturating_sub(1) as u16;
+                        self.scroll = self
+                            .scroll
+                            .saturating_add(self.config.page_size)
+                            .min(max_scroll);
+                    }
+                    Action::Home => {
+                        self.scroll = 0;
+                    }
+                    Action::End => {
+                        self.scroll = self.total_lines.saturating_sub(1) as u16;
                     }
                 }
             }

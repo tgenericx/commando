@@ -1,4 +1,3 @@
-#![cfg(feature = "tui")]
 //! Ratatui UI adapter — rich TUI implementation of the Ui port.
 
 mod highlight_syntax;
@@ -14,7 +13,6 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph, Wrap},
 };
 
-// Re-export public components
 pub use preview::PreviewBuilder;
 pub use prompt::PromptBuilder;
 pub use select::{SelectBuilder, SelectOption};

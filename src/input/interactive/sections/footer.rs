@@ -7,11 +7,25 @@ use crate::input::interactive::InteractiveError;
 use crate::ports::ui::Ui;
 
 pub fn collect_breaking_change<U: Ui>(ui: &U) -> Result<Option<String>, InteractiveError> {
-    let is_breaking = ui
-        .confirm("5. Does this break existing functionality?")
+    // Use select with yes/no options instead of confirm
+    let options = vec![
+        (
+            "yes".to_string(),
+            "Yes".to_string(),
+            "This is a breaking change".to_string(),
+        ),
+        (
+            "no".to_string(),
+            "No".to_string(),
+            "Not a breaking change".to_string(),
+        ),
+    ];
+
+    let choice = ui
+        .select("5. Does this break existing functionality?", options)
         .map_err(InteractiveError::Ui)?;
 
-    if !is_breaking {
+    if choice == "no" {
         ui.println("");
         return Ok(None);
     }

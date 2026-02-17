@@ -9,69 +9,16 @@ use crate::ports::ui::Ui;
 
 /// Collect commit type using a selection UI for better UX
 pub fn collect_type<U: Ui>(ui: &U) -> Result<CommitType, InteractiveError> {
-    let options = vec![
-        (
-            "feat".to_string(),
-            "feat".to_string(),
-            "new feature".to_string(),
-        ),
-        ("fix".to_string(), "fix".to_string(), "bug fix".to_string()),
-        (
-            "docs".to_string(),
-            "docs".to_string(),
-            "documentation only".to_string(),
-        ),
-        (
-            "style".to_string(),
-            "style".to_string(),
-            "formatting, whitespace".to_string(),
-        ),
-        (
-            "refactor".to_string(),
-            "refactor".to_string(),
-            "code restructuring".to_string(),
-        ),
-        (
-            "perf".to_string(),
-            "perf".to_string(),
-            "performance improvement".to_string(),
-        ),
-        (
-            "test".to_string(),
-            "test".to_string(),
-            "adding or fixing tests".to_string(),
-        ),
-        (
-            "build".to_string(),
-            "build".to_string(),
-            "build system / dependencies".to_string(),
-        ),
-        (
-            "ci".to_string(),
-            "ci".to_string(),
-            "CI configuration".to_string(),
-        ),
-        (
-            "chore".to_string(),
-            "chore".to_string(),
-            "maintenance".to_string(),
-        ),
-        (
-            "revert".to_string(),
-            "revert".to_string(),
-            "revert a previous commit".to_string(),
-        ),
-    ];
+    let options: Vec<(CommitType, String, String)> = CommitType::ALL
+        .iter()
+        .map(|ct| (*ct, ct.as_str().to_string(), ct.description().to_string()))
+        .collect();
 
     let selected = ui
         .select("1. Select commit type:", options)
         .map_err(InteractiveError::Ui)?;
 
-    CommitType::from_str(&selected).map_err(|_| {
-        InteractiveError::Ui(crate::ports::ui::UiError(
-            "Invalid commit type selected".to_string(),
-        ))
-    })
+    Ok(selected)
 }
 
 pub fn collect_scope<U: Ui>(ui: &U) -> Result<Option<String>, InteractiveError> {

@@ -37,13 +37,35 @@ impl CommitType {
         }
     }
 
-    /// Returns all valid commit types as a slice of strings
-    pub fn all_as_str() -> &'static [&'static str] {
-        &[
-            "feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore",
-            "revert",
-        ]
+    pub fn description(&self) -> &'static str {
+        match self {
+            CommitType::Feat => "new feature",
+            CommitType::Fix => "bug fix",
+            CommitType::Docs => "documentation only",
+            CommitType::Style => "formatting, whitespace",
+            CommitType::Refactor => "code restructuring",
+            CommitType::Perf => "performance improvement",
+            CommitType::Test => "adding or fixing tests",
+            CommitType::Build => "build system / dependencies",
+            CommitType::Ci => "CI configuration",
+            CommitType::Chore => "maintenance",
+            CommitType::Revert => "revert a previous commit",
+        }
     }
+
+    pub const ALL: &'static [CommitType] = &[
+        CommitType::Feat,
+        CommitType::Fix,
+        CommitType::Docs,
+        CommitType::Style,
+        CommitType::Refactor,
+        CommitType::Perf,
+        CommitType::Test,
+        CommitType::Build,
+        CommitType::Ci,
+        CommitType::Chore,
+        CommitType::Revert,
+    ];
 
     /// Parse a commit type from a string
     pub fn from_str(s: &str) -> Result<Self, DomainError> {

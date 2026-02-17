@@ -5,7 +5,6 @@ use crate::domain::commit_type::CommitType;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum DomainError {
-    // Validation errors
     InvalidCommitType(String),
     EmptyDescription,
     DescriptionTooLong(usize),
@@ -17,9 +16,12 @@ pub enum DomainError {
 impl std::fmt::Display for DomainError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            // Validation errors
             DomainError::InvalidCommitType(t) => {
-                let valid_types = CommitType::all_as_str().join(", ");
+                let valid_types = CommitType::ALL
+                    .iter()
+                    .map(|t| t.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ");
                 write!(
                     f,
                     "Invalid commit type: '{}'. Must be one of: {}",

@@ -6,11 +6,24 @@ use crate::input::interactive::InteractiveError;
 use crate::ports::ui::Ui;
 
 pub fn collect<U: Ui>(ui: &U) -> Result<Option<String>, InteractiveError> {
-    let wants_body = ui
-        .confirm("4. Add a body with more detail?")
+    let options = vec![
+        (
+            "yes".to_string(),
+            "Yes".to_string(),
+            "Add a body with more detail".to_string(),
+        ),
+        (
+            "no".to_string(),
+            "No".to_string(),
+            "Skip the body".to_string(),
+        ),
+    ];
+
+    let choice = ui
+        .select("4. Add a body with more detail?", options)
         .map_err(InteractiveError::Ui)?;
 
-    if !wants_body {
+    if choice == "no" {
         ui.println("");
         return Ok(None);
     }

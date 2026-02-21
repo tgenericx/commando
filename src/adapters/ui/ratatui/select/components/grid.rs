@@ -8,6 +8,9 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph},
 };
 
+/// Fixed cell height: top border + 1 text line + bottom border.
+const CELL_HEIGHT: u16 = 3;
+
 pub struct GridRenderer;
 
 impl GridRenderer {
@@ -18,13 +21,41 @@ impl GridRenderer {
         selected: usize,
         grid_cols: usize,
     ) {
-        // Use div_ceil instead of manual calculation
+        if options.is_empty() || grid_cols == 0 {
+            return;
+        }
+
         let rows = options.len().div_ceil(grid_cols);
-        let row_height = area.height / rows as u16;
+        let cols = grid_cols;
+
+        // Distribute width evenly, spreading remainder across leading columns.
+        // e.g. width=10, cols=3 → [4, 3, 3] — no pixels lost.
+        let base_col_width = area.width / cols as u16;
+        let col_remainder = area.width % cols as u16;
+
+        let col_widths: Vec<u16> = (0..cols)
+            .map(|c| base_col_width + if (c as u16) < col_remainder { 1 } else { 0 })
+            .collect();
+
+        let col_offsets: Vec<u16> = col_widths
+            .iter()
+            .scan(0u16, |acc, &w| {
+                let x = *acc;
+                *acc += w;
+                Some(x)
+            })
+            .collect();
 
         for row in 0..rows {
-            for col in 0..grid_cols {
-                let idx = row * grid_cols + col;
+            let y = area.y + row as u16 * CELL_HEIGHT;
+
+            // Don't render rows that would overflow the available area.
+            if y + CELL_HEIGHT > area.y + area.height {
+                break;
+            }
+
+            for col in 0..cols {
+                let idx = row * cols + col;
                 if idx >= options.len() {
                     continue;
                 }
@@ -33,10 +64,10 @@ impl GridRenderer {
                 let is_selected = idx == selected;
 
                 let cell_area = Rect {
-                    x: area.x + (col as u16 * (area.width / grid_cols as u16)),
-                    y: area.y + (row as u16 * row_height),
-                    width: area.width / grid_cols as u16,
-                    height: row_height,
+                    x: area.x + col_offsets[col],
+                    y,
+                    width: col_widths[col],
+                    height: CELL_HEIGHT,
                 };
 
                 let border_style = if is_selected {
@@ -47,34 +78,34 @@ impl GridRenderer {
                     Style::default().fg(Color::DarkGray)
                 };
 
+                // Empty block — just the border, no title.
                 let card = Block::default()
                     .borders(Borders::ALL)
-                    .border_style(border_style)
-                    .title(format!(" {} ", opt.label))
-                    .title_alignment(Alignment::Center);
+                    .border_style(border_style);
 
                 f.render_widget(card, cell_area);
 
-                // Render description inside card if space permits
-                if cell_area.height > 3 {
-                    let inner_area = Rect {
-                        x: cell_area.x + 1,
-                        y: cell_area.y + 2,
-                        width: cell_area.width.saturating_sub(2),
-                        height: cell_area.height.saturating_sub(3),
-                    };
+                // Render label centered on the single inner line.
+                let label_area = Rect {
+                    x: cell_area.x + 1,
+                    y: cell_area.y + 1,
+                    width: cell_area.width.saturating_sub(2),
+                    height: 1,
+                };
 
-                    let desc = Paragraph::new(opt.description.as_str())
-                        .style(if is_selected {
-                            Style::default().fg(Color::White)
-                        } else {
-                            Style::default().fg(Color::Gray)
-                        })
-                        .alignment(Alignment::Center)
-                        .wrap(ratatui::widgets::Wrap { trim: true });
+                let label_style = if is_selected {
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD)
+                } else {
+                    Style::default().fg(Color::DarkGray)
+                };
 
-                    f.render_widget(desc, inner_area);
-                }
+                let label = Paragraph::new(opt.label.as_str())
+                    .style(label_style)
+                    .alignment(Alignment::Center);
+
+                f.render_widget(label, label_area);
             }
         }
     }
